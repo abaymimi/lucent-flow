@@ -1,0 +1,94 @@
+.visualization-example {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.todo-app {
+  flex: 1;
+  max-width: 400px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.todo-app h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.todo-app form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.todo-app input[type="text"] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.todo-app button {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.todo-app button:hover {
+  background: #0056b3;
+}
+
+.todo-app ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-app li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.todo-app li:last-child {
+  border-bottom: none;
+}
+
+.todo-app .completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.visualizer-container {
+  flex: 2;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.visualizer-container h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .visualization-example {
+    flex-direction: column;
+  }
+
+  .todo-app {
+    max-width: none;
+  }
+}

@@ -1,0 +1,50 @@
+.advanced-counter {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.advanced-counter h2 {
+  margin: 0 0 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+.counter-display {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.counter-display p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.counter-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.counter-controls button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.counter-controls button:hover {
+  background: #0056b3;
+}
+
+.counter-controls button:active {
+  background: #004085;
+}

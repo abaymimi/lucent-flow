@@ -1,0 +1,24 @@
+.visualizer-example {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.counter-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.counter-controls button {
+  padding: 5px 10px;
+  font-size: 16px;
+}
+
+.visualizer-container {
+  margin-top: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
