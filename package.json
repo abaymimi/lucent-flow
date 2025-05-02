@@ -1,6 +1,6 @@
 {
   "name": "lucent-flow",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A lightweight, composable state & data library for React and TypeScript",
   "type": "module",
   "main": "dist/index.js",
