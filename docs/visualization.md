@@ -1,6 +1,6 @@
-# State Visualization
+# State Visualization with Lucent-Flow
 
-Lucent provides powerful state visualization tools to help you understand and debug your application's state management.
+Lucent-Flow provides powerful tools for visualizing and debugging your application state. This guide will show you how to use these features effectively.
 
 ## Features
 
@@ -11,10 +11,8 @@ Lucent provides powerful state visualization tools to help you understand and de
 
 ## Installation
 
-The visualization tools are included in the main Lucent package:
-
 ```bash
-npm install lucent
+npm install lucent-flow
 ```
 
 ## Basic Usage

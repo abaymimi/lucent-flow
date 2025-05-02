@@ -1,4 +1,12 @@
-# Lucent State Management Features
+# Lucent-Flow Features
+
+Lucent-Flow is packed with powerful features to make state management and data fetching a breeze. This guide covers all the major features and how to use them.
+
+## Installation
+
+```bash
+npm install lucent-flow
+```
 
 ## Core Features
 
@@ -46,6 +54,8 @@
 ### 1. Pagination Support
 
 ```typescript
+import { create } from "lucent-flow";
+
 const store = create<AdvancedPostStore>((set, get) => ({
   pagination: {
     currentPage: 1,
@@ -204,13 +214,13 @@ See the [AdvancedPostStore](../src/stores/advancedPostStore.ts) for a complete e
 1. Install Lucent:
 
 ```bash
-npm install lucent
+npm install lucent-flow
 ```
 
 2. Create a store:
 
 ```typescript
-import { create } from "lucent";
+import { create } from "lucent-flow";
 
 const store = create<YourStore>((set, get) => ({
   // Your store implementation

@@ -1,24 +1,24 @@
-# Getting Started with Lucent
+# Getting Started with Lucent-Flow
 
-Lucent is a powerful state management library built on top of Zustand. This guide will walk you through the basic setup and usage of Lucent in your React application.
+Lucent-Flow is a powerful state management library built on top of Zustand. This guide will walk you through the basic setup and usage of Lucent-Flow in your React application.
 
 ## Installation
 
 ```bash
-npm install lucent
+npm install lucent-flow
 # or
-yarn add lucent
+yarn add lucent-flow
 ```
 
 ## Basic Setup
 
 ### 1. Create Your Store
 
-First, create a store using Lucent's `create` function:
+First, create a store using Lucent-Flow's `create` function:
 
 ```typescript
 // stores/counterStore.ts
-import { create } from "lucent";
+import { create } from "lucent-flow";
 
 interface CounterState {
   count: number;
@@ -58,10 +58,10 @@ export function Counter() {
 
 ### 1. Using Middleware
 
-Lucent comes with built-in middleware for common use cases:
+Lucent-Flow comes with built-in middleware for common use cases:
 
 ```typescript
-import { create, devtools, persist } from "lucent";
+import { create, devtools, persist } from "lucent-flow";
 
 const useStore = create(
   devtools(
@@ -82,7 +82,7 @@ const useStore = create(
 To persist your store's state:
 
 ```typescript
-import { create, persist } from "lucent";
+import { create, persist } from "lucent-flow";
 
 const useStore = create(
   persist(
@@ -102,7 +102,7 @@ const useStore = create(
 For debugging with Redux DevTools:
 
 ```typescript
-import { create, devtools } from "lucent";
+import { create, devtools } from "lucent-flow";
 
 const useStore = create(
   devtools(

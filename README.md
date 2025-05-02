@@ -1,6 +1,6 @@
 # 🔮 Lucent-Flow
 
-**Lucent** is a lightweight, blazing-fast state management and data-fetching library for React and TypeScript. Designed to be tiny, reactive, and composable — with middleware support like logging and persistence baked in.
+**Lucent-Flow** is a lightweight, blazing-fast state management and data-fetching library for React and TypeScript. Designed to be tiny, reactive, and composable — with middleware support like logging and persistence baked in.
 
 ---
 
@@ -25,10 +25,10 @@ npm install lucent-flow
 
 ```typescript
 // Import core functionality
-import { createStore } from "lucent";
+import { createStore } from "lucent-flow";
 
 // Import middleware
-import { logger, devtools } from "lucent";
+import { logger, devtools } from "lucent-flow";
 
 // Create a store with middleware
 const useStore = createStore(
@@ -68,7 +68,7 @@ LucentQuery provides a powerful and flexible way to handle data fetching with bu
 
 ```typescript
 // Import LucentQuery
-import { lucentQuery, QueryBuilder } from "lucent";
+import { lucentQuery, QueryBuilder } from "lucent-flow";
 
 // 1. Create a base query instance
 const api = lucentQuery({
