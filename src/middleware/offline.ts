@@ -2,7 +2,7 @@ import { StoreApi } from 'zustand';
 
 interface OfflineAction {
   type: string;
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: number;
   retries: number;
 }
@@ -25,13 +25,22 @@ interface OfflineState {
   isProcessing: boolean;
 }
 
+interface OfflineMethods {
+  queueAction: (action: Omit<OfflineAction, 'timestamp' | 'retries'>) => void;
+  processQueue: () => Promise<void>;
+  setRetryStrategy: (strategy: RetryStrategy) => void;
+  onError: (handler: (error: Error) => void) => void;
+  isOnline: () => boolean;
+  getQueue: () => OfflineAction[];
+}
+
 export const offline = <T extends object>(
   store: StoreApi<T>,
   config: OfflineConfig = {}
 ) => {
   const {
     storage = 'indexedDB',
-    syncInterval = 5000,
+    // syncInterval = 5000,
     retryStrategy = {
       maxRetries: 3,
       initialDelay: 1000,
@@ -45,7 +54,7 @@ export const offline = <T extends object>(
     isProcessing: false,
   };
 
-  let syncIntervalId: NodeJS.Timeout;
+//   let syncIntervalId: NodeJS.Timeout;
   let errorHandler: ((error: Error) => void) | null = null;
 
   // Initialize IndexedDB if needed
@@ -186,7 +195,8 @@ export const offline = <T extends object>(
   window.addEventListener('offline', handleOffline);
 
   // Add offline methods to store
-  (store as any).offline = {
+  const storeWithOffline = store as StoreApi<T> & { offline: OfflineMethods };
+  storeWithOffline.offline = {
     queueAction,
     processQueue,
     setRetryStrategy,
@@ -204,7 +214,7 @@ export const offline = <T extends object>(
   }
 
   // Start sync interval
-  syncIntervalId = setInterval(processQueue, syncInterval);
+//   const syncIntervalId = setInterval(processQueue, syncInterval);
 
   return (set: StoreApi<T>['setState']) => {
     return (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {

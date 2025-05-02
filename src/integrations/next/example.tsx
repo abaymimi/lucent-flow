@@ -1,6 +1,7 @@
 import React from "react";
-import { createNextStore, StoreProvider, useStore } from "./index";
-import { StateCreator } from "zustand";
+import { StoreProvider } from "./index";
+import { useStore } from "./hooks";
+import { createNextStore } from "./store";
 
 interface CounterState {
   count: number;
@@ -9,9 +10,9 @@ interface CounterState {
 
 // 1. Create a store
 const useCounterStore = createNextStore<CounterState>(
-  (set) => ({
+  (set: (fn: (state: CounterState) => Partial<CounterState>) => void) => ({
     count: 0,
-    increment: () => set((state) => ({ count: state.count + 1 })),
+    increment: () => set((state: CounterState) => ({ count: state.count + 1 })),
   }),
   {
     persist: true,
@@ -27,7 +28,7 @@ export function App({
   pageProps,
 }: {
   Component: React.ComponentType;
-  pageProps: any;
+  pageProps: Record<string, unknown>;
 }) {
   return (
     <StoreProvider createStore={() => useCounterStore}>
@@ -38,9 +39,11 @@ export function App({
 
 // 3. Use the store in your components
 export function Counter() {
-  const count = useStore<CounterState, number>((state) => state.count);
+  const count = useStore<CounterState, number>(
+    (state: CounterState) => state.count
+  );
   const increment = useStore<CounterState, () => void>(
-    (state) => state.increment
+    (state: CounterState) => state.increment
   );
 
   return (

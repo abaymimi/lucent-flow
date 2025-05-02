@@ -46,7 +46,7 @@ const fetchUsers = async (): Promise<User[]> => {
     url: '/users',
     method: 'GET',
   });
-  return result.data;
+  return result.data as User[];
 };
 
 export const userStore = createFetchStore<User[]>('users', fetchUsers, {

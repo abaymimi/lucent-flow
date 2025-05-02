@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useStore } from "../hooks/useStore";
 import { useAdvancedPostStore } from "../stores/advancedPostStore";
-import { QueryBuilder } from "../utils/queryBuilder";
 import { Post, PostFilters, PaginatedResponse } from "../types/post";
 
 const AdvancedPostList: React.FC = () => {
@@ -26,6 +24,7 @@ const AdvancedPostList: React.FC = () => {
     deletePost,
   } = useAdvancedPostStore();
 
+  console.log("loading..", storeLoading);
   useEffect(() => {
     const loadPosts = async () => {
       try {

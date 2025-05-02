@@ -1,5 +1,8 @@
-import { GraphQLClientConfig, GraphQLQuery, GraphQLMutation, GraphQLSubscription, GraphQLResponse, GraphQLCacheEntry } from '../types/graphql';
+import {  GraphQLCacheEntry } from '../types/graphql';
 import { GraphQLCacheImpl } from './graphqlCache';
+
+// Define type for GraphQL variables
+export type GraphQLVariables = Record<string, unknown>;
 
 export class GraphQLClient {
   private endpoint: string;
@@ -51,7 +54,7 @@ export class GraphQLClient {
     }
   }
 
-  async query<T>(query: string, variables?: Record<string, any>): Promise<T> {
+  async query<T>(query: string, variables?: GraphQLVariables): Promise<T> {
     const cacheKey = this.generateCacheKey(query, variables);
     const cached = this.cache.get<T>(cacheKey);
 
@@ -95,7 +98,7 @@ export class GraphQLClient {
     return result.data;
   }
 
-  async mutate<T>(mutation: string, variables?: Record<string, any>): Promise<T> {
+  async mutate<T>(mutation: string, variables?: GraphQLVariables): Promise<T> {
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {
@@ -121,7 +124,7 @@ export class GraphQLClient {
     return result.data;
   }
 
-  subscribe<T>(subscription: string, callback: (data: T) => void, variables?: Record<string, any>): () => void {
+  subscribe<T>(subscription: string, callback: (data: T) => void, variables?: GraphQLVariables): () => void {
     if (!this.ws) {
       throw new Error('WebSocket connection not established');
     }
@@ -156,7 +159,7 @@ export class GraphQLClient {
     };
   }
 
-  private generateCacheKey(query: string, variables?: Record<string, any>): string {
+  private generateCacheKey(query: string, variables?: GraphQLVariables): string {
     return JSON.stringify({ query, variables });
   }
 } 

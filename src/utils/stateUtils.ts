@@ -1,5 +1,4 @@
-import { StateCreator, StoreApi } from 'zustand';
-import { produce } from 'immer';
+import { StoreApi } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
 // Type for selector function
@@ -9,38 +8,40 @@ export type Selector<T, R> = (state: T) => R;
 export type ActionCreator<T, P = void> = (payload: P) => (state: T) => Partial<T>;
 
 // Create a selector middleware
-export const withSelectors = <T extends object>(
+export const withSelectors = <T extends object, S extends Record<string, Selector<T, unknown>>>(
   store: StoreApi<T>,
-  selectors: Record<string, Selector<T, any>>
+  selectors: S
 ) => {
   const useStore = store;
   
   Object.entries(selectors).forEach(([key, selector]) => {
-    (useStore as any)[key] = () => {
+    const typedStore = useStore as StoreApi<T & { [K in keyof S]: () => ReturnType<S[K]> }>;
+    (typedStore as unknown as Record<string, () => ReturnType<S[keyof S]>>)[key] = () => {
       const state = useStore.getState();
-      return selector(state);
+      return selector(state) as ReturnType<S[keyof S]>;
     };
   });
 
-  return useStore;
+  return useStore as StoreApi<T & { [K in keyof S]: () => ReturnType<S[K]> }>;
 };
 
 // Create an action creator middleware
-export const withActions = <T extends object>(
+export const withActions = <T extends object, A extends Record<string, ActionCreator<T, unknown>>>(
   store: StoreApi<T>,
-  actions: Record<string, ActionCreator<T, any>>
+  actions: A
 ) => {
   const useStore = store;
   
   Object.entries(actions).forEach(([key, action]) => {
-    (useStore as any)[key] = (payload: any) => {
+    const typedStore = useStore as StoreApi<T & { [K in keyof A]: (payload: Parameters<A[K]>[0]) => void }>;
+    (typedStore as unknown as Record<string, (payload: Parameters<A[keyof A]>[0]) => void>)[key] = (payload: Parameters<A[keyof A]>[0]) => {
       const state = useStore.getState();
       const update = action(payload)(state);
       useStore.setState(update);
     };
   });
 
-  return useStore;
+  return useStore as StoreApi<T & { [K in keyof A]: (payload: Parameters<A[K]>[0]) => void }>;
 };
 
 // Combine multiple stores
@@ -84,9 +85,9 @@ export const splitStore = <T extends object, K extends keyof T>(
   return keys.reduce((acc, key) => {
     acc[key] = {
       getState: () => ({ [key]: store.getState()[key] } as Pick<T, K>),
-      setState: (partial) => {
+      setState: (partial: Partial<Pick<T, K>>) => {
         const currentState = store.getState();
-        store.setState({ ...currentState, [key]: (partial as any)[key] });
+        store.setState({ ...currentState, [key]: partial[key] });
       },
       subscribe: (listener) => store.subscribe(listener),
     } as StoreApi<Pick<T, K>>;

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { lucentQuery } from '../utils/lucentQuery';
-import { QueryBuilder } from '../utils/queryBuilder';
-import { Post, PostFilters, PaginatedResponse } from '../types/post';
+// import { QueryBuilder } from '../utils/queryBuilder';
+import { Post, PostFilters } from '../types/post';
 
 // Initialize LucentQuery with advanced configuration
 const postQuery = lucentQuery({
@@ -35,7 +35,7 @@ const postQuery = lucentQuery({
 });
 
 // Initialize QueryBuilder
-const queryBuilder = new QueryBuilder('https://jsonplaceholder.typicode.com');
+// const queryBuilder = new QueryBuilder('https://jsonplaceholder.typicode.com');
 
 interface AdvancedPostStore {
   posts: Post[];
@@ -107,7 +107,7 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       const totalPages = Math.ceil(totalItems / (filters.limit || 10));
       
       set({
-        posts: result.data,
+        posts: result.data as Post[],
         pagination: {
           currentPage: filters.page || 1,
           totalPages,
@@ -150,7 +150,7 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       // Replace optimistic post with real data
       set((state) => ({
         posts: state.posts.map((p) =>
-          p.id === optimisticId ? result.data : p
+          p.id === optimisticId ? result.data as Post : p
         ),
         loading: false,
       }));
@@ -183,7 +183,7 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
 
       set((state) => ({
         posts: state.posts.map((p) =>
-          p.id === id ? result.data : p
+          p.id === id ? result.data as Post : p
         ),
         loading: false,
       }));

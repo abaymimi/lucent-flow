@@ -7,7 +7,7 @@ interface OptimisticUpdate<T> {
 
 export class OptimisticUpdates {
   private static instance: OptimisticUpdates;
-  private updates: Map<string, OptimisticUpdate<any>> = new Map();
+  private updates: Map<string, OptimisticUpdate<unknown>> = new Map();
   private readonly UPDATE_TTL = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {}
@@ -56,7 +56,7 @@ export class OptimisticUpdates {
   }
 
   private cleanup(): void {
-    const now = Date.now();
+    // const now = Date.now();
     for (const [id, update] of this.updates.entries()) {
       if (!this.isUpdateValid(update.timestamp)) {
         this.updates.delete(id);

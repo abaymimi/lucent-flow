@@ -1,7 +1,7 @@
 import { GraphQLCacheEntry } from '../types/graphql';
 
 export class GraphQLCacheImpl {
-  private cache: Map<string, GraphQLCacheEntry<any>>;
+  private cache: Map<string, GraphQLCacheEntry<unknown>>;
   private ttl: number;
   private version: number;
 
@@ -24,7 +24,7 @@ export class GraphQLCacheImpl {
   }
 
   set<T>(key: string, entry: GraphQLCacheEntry<T>): void {
-    this.cache.set(key, entry);
+    this.cache.set(key, entry as GraphQLCacheEntry<unknown>);
   }
 
   delete(key: string): void {
@@ -35,7 +35,7 @@ export class GraphQLCacheImpl {
     this.cache.clear();
   }
 
-  getAll(): IterableIterator<[string, GraphQLCacheEntry<any>]> {
+  getAll(): IterableIterator<[string, GraphQLCacheEntry<unknown>]> {
     return this.cache.entries();
   }
 

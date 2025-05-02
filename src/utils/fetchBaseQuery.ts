@@ -47,7 +47,7 @@ export const fetchBaseQuery = ({
     const requestConfig: RequestInit = {
       method,
       headers: preparedHeaders,
-      ...(body && { body: JSON.stringify(body) }),
+      ...(body ? { body: JSON.stringify(body) } : {}),
     };
 
     // Create abort controller for timeout

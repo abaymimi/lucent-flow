@@ -1,25 +1,25 @@
 export interface GraphQLQuery {
   query: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
 }
 
 export interface GraphQLMutation {
   mutation: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
 }
 
 export interface GraphQLSubscription {
   subscription: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
 }
 
-export interface GraphQLResponse<T = any> {
+export interface GraphQLResponse<T = unknown> {
   data?: T;
   errors?: Array<{
     message: string;
     locations?: Array<{ line: number; column: number }>;
     path?: string[];
-    extensions?: Record<string, any>;
+    extensions?: Record<string, unknown>;
   }>;
 }
 
@@ -30,10 +30,10 @@ export interface GraphQLCacheConfig {
   revalidateOnFocus?: boolean;
   revalidateOnReconnect?: boolean;
   revalidateInterval?: number;
-  cacheKey?: (query: string, variables?: Record<string, any>) => string;
+  cacheKey?: (query: string, variables?: Record<string, unknown>) => string;
 }
 
-export interface GraphQLCacheEntry<T = any> {
+export interface GraphQLCacheEntry<T = unknown> {
   data: T;
   timestamp: number;
   tags: string[];
@@ -66,7 +66,7 @@ export interface GraphQLClientConfig {
 export interface GraphQLStoreConfig<T> {
   query: {
     query: string;
-    variables?: Record<string, any>;
+    variables?: Record<string, unknown>;
   };
   cacheConfig?: {
     ttl?: number;

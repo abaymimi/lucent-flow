@@ -46,7 +46,19 @@ export const useExampleStore = create<ExampleState>()(
         console.groupEnd();
         set({ text });
       },
+      undo: () => {
+        console.group('State Update');
+        console.log('Action: undo');
+        console.groupEnd();
+        // Implementation would go here
+      },
+      redo: () => {
+        console.group('State Update');
+        console.log('Action: redo');
+        console.groupEnd();
+        // Implementation would go here
+      },
     }),
-    { name: 'Example Store' }
+    { name: 'Example Store', trace: true }
   )
 );

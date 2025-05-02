@@ -17,7 +17,7 @@ export const createStore = <T>(
   const getState = () => currentState;
 
   const rawSetState = (newState: T | ((prev: T) => T)) => {
-    const nextState = typeof newState === 'function' ? (newState as any)(currentState) : newState;
+    const nextState = typeof newState === 'function' ? (newState as (prev: T) => T)(currentState) : newState;
     currentState = nextState;
     subscribers.forEach((callback) => callback(currentState));
   };

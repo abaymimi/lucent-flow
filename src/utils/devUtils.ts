@@ -1,5 +1,4 @@
 import { StoreApi } from 'zustand';
-import { Draft } from 'immer';
 
 /**
  * Type validation utilities for development mode
@@ -57,7 +56,7 @@ export interface DebugUtils<T> {
  * Enhanced error interface with additional context
  */
 export interface EnhancedError extends Error {
-  context?: any;
+  context?: Record<string, unknown>;
   timestamp?: number;
   stack?: string;
 }
@@ -76,7 +75,7 @@ export interface PerformanceMetrics {
 /**
  * Creates enhanced error with context and timestamp
  */
-const createEnhancedError = (message: string, context?: any): EnhancedError => {
+const createEnhancedError = (message: string, context?: Record<string, unknown>): EnhancedError => {
   const error = new Error(message) as EnhancedError;
   error.context = context;
   error.timestamp = Date.now();
@@ -94,7 +93,7 @@ export const createDevMiddleware = <T extends object>(
     const { getState, setState } = store;
     let lastUpdateTime = Date.now();
     let actionHistory: Array<{ type: string; state: T; timestamp: number }> = [];
-    let performanceMetrics: PerformanceMetrics = {
+    const  performanceMetrics: PerformanceMetrics = {
       averageUpdateTime: 0,
       totalUpdates: 0,
       slowUpdates: 0,
@@ -249,7 +248,7 @@ export const createDevMiddleware = <T extends object>(
  * Development mode warning utility
  * Provides enhanced warning messages with context
  */
-export const warn = (message: string, context?: any) => {
+export const warn = (message: string, context?: Record<string, unknown>) => {
   if (process.env.NODE_ENV === 'development') {
     console.warn(
       `[Lucent Dev Warning] ${message}${

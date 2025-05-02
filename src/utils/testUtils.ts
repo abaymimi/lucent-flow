@@ -1,4 +1,4 @@
-import { StoreApi, StateCreator } from 'zustand';
+import { StoreApi } from 'zustand';
 import { create } from 'zustand';
 
 /**
@@ -46,7 +46,7 @@ export const createMockStore = <T extends object>(
     middleware?: (store: StoreApi<T>) => (set: StoreApi<T>['setState']) => StoreApi<T>['setState'];
   }
 ) => {
-  const store = create<T>()((set, get) => ({
+  const store = create<T>()(() => ({
     ...initialState,
   }));
 
@@ -120,17 +120,18 @@ export class TestHelper<T extends object> {
   private store: StoreApi<T>;
   private snapshot: StoreSnapshot<T>;
   private stateChanges: { state: T; action: string }[] = [];
+  private originalSet: StoreApi<T>['setState'];
 
   constructor(store: StoreApi<T>) {
     this.store = store;
     this.snapshot = new StoreSnapshot(store);
+    this.originalSet = store.setState;
   }
 
   /**
    * Records state changes during a test
    */
   recordStateChanges() {
-    const originalSet = this.store.setState;
     this.store.setState = (partial, action) => {
       const nextState = typeof partial === 'function'
         ? (partial as (state: T) => T | Partial<T>)(this.store.getState())
@@ -141,7 +142,7 @@ export class TestHelper<T extends object> {
         action: typeof action === 'string' ? action : 'unknown',
       });
 
-      originalSet(partial, false);
+      this.originalSet(partial, false);
     };
   }
 
@@ -153,10 +154,11 @@ export class TestHelper<T extends object> {
   }
 
   /**
-   * Clears recorded state changes
+   * Clears recorded state changes and resets setState
    */
   clearStateChanges() {
     this.stateChanges = [];
+    this.store.setState = this.originalSet;
   }
 
   /**
@@ -185,14 +187,17 @@ export class TestHelper<T extends object> {
    */
   assertState(expected: Partial<T>) {
     const currentState = this.store.getState();
-    const mismatches: { key: keyof T; expected: any; actual: any }[] = [];
+
+    const mismatches: {  key: keyof T;
+        expected: T[keyof T];
+        actual: T[keyof T];}[] = [];
 
     Object.entries(expected).forEach(([key, value]) => {
       const k = key as keyof T;
       if (currentState[k] !== value) {
         mismatches.push({
           key: k,
-          expected: value,
+          expected: value as T[keyof T],
           actual: currentState[k],
         });
       }

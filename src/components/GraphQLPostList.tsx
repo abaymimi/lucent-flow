@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { createGraphQLStore } from "../stores/graphqlStore";
-import { GraphQLQuery } from "../types/graphql";
 import "./GraphQLPostList.css";
 
 interface Post {
@@ -66,13 +65,10 @@ export const GraphQLPostList: React.FC = () => {
 
   const handleCreatePost = async () => {
     try {
-      await mutate({
-        query: CREATE_POST_MUTATION,
-        variables: {
-          title: "New Post",
-          body: "This is a new post created via GraphQL",
-          userId: "1",
-        },
+      await mutate(CREATE_POST_MUTATION, {
+        title: "New Post",
+        body: "This is a new post created via GraphQL",
+        userId: "1",
       });
       fetchData(); // Refresh the list
     } catch (err) {

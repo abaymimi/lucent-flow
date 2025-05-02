@@ -1,17 +1,17 @@
 import { StoreApi } from 'zustand';
 import { create } from 'zustand';
 
-export interface StateNode {
+export interface StateNode<T = unknown> {
   id: string;
   name: string;
-  value: any;
+  value: T;
   dependencies: string[];
   size: number;
   lastUpdated: number;
 }
 
-export interface StateGraph {
-  nodes: StateNode[];
+export interface StateGraph<T = unknown> {
+  nodes: StateNode<T>[];
   edges: { from: string; to: string }[];
 }
 
@@ -21,9 +21,9 @@ export interface PerformanceMetrics {
   renderCount: number;
 }
 
-export interface StateTimeline {
+export interface StateTimeline<T = unknown> {
   timestamp: number;
-  state: any;
+  state: T;
   action: string;
   performance: PerformanceMetrics;
 }
@@ -34,14 +34,14 @@ export interface VisualizerConfig {
   trackPerformance?: boolean;
 }
 
-export class StateVisualizer {
-  private store: StoreApi<any>;
-  private history: StateTimeline[] = [];
-  private graph: StateGraph = { nodes: [], edges: [] };
+export class StateVisualizer<T extends object> {
+  private store: StoreApi<T>;
+  private history: StateTimeline<T>[] = [];
+  private graph: StateGraph<T> = { nodes: [], edges: [] };
   private config: VisualizerConfig;
   private performanceObserver: PerformanceObserver | null = null;
 
-  constructor(store: StoreApi<any>, config: VisualizerConfig = {}) {
+  constructor(store: StoreApi<T>, config: VisualizerConfig = {}) {
     this.store = store;
     this.config = {
       maxHistory: 100,
@@ -72,42 +72,42 @@ export class StateVisualizer {
 
     // Subscribe to store changes
     this.store.subscribe((state, prevState) => {
-      this.updateGraph(state, prevState);
+      this.updateGraph(state);
       this.addToTimeline(state, prevState);
     });
   }
 
-  private updateGraph(state: any, prevState: any) {
-    const nodes: StateNode[] = [];
+  private updateGraph(state: T) {
+    const nodes: StateNode<T>[] = [];
     const edges: { from: string; to: string }[] = [];
 
     // Analyze state structure
-    const analyzeState = (obj: any, path: string = '') => {
+    const analyzeState = (obj: Record<string, unknown>, path: string = '') => {
       Object.entries(obj).forEach(([key, value]) => {
         const currentPath = path ? `${path}.${key}` : key;
-        const node: StateNode = {
+        const node: StateNode<T> = {
           id: currentPath,
           name: key,
-          value,
+          value: value as T,
           dependencies: [],
-          size: this.calculateSize(value),
+          size: this.calculateSize(value as T),
           lastUpdated: Date.now(),
         };
 
         nodes.push(node);
 
         if (typeof value === 'object' && value !== null) {
-          analyzeState(value, currentPath);
+          analyzeState(value as Record<string, unknown>, currentPath);
         }
       });
     };
 
-    analyzeState(state);
+    analyzeState(state as Record<string, unknown>);
     this.graph = { nodes, edges };
   }
 
-  private addToTimeline(state: any, prevState: any) {
-    const timelineEntry: StateTimeline = {
+  private addToTimeline(state: T, prevState: T) {
+    const timelineEntry: StateTimeline<T> = {
       timestamp: Date.now(),
       state,
       action: this.getActionName(state, prevState),
@@ -131,7 +131,7 @@ export class StateVisualizer {
 
   private trackMemory() {
     if (typeof window !== 'undefined' && 'performance' in window) {
-      const memory = (performance as any).memory;
+      const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
       if (memory) {
         console.log('Memory usage:', {
           used: memory.usedJSHeapSize,
@@ -142,29 +142,32 @@ export class StateVisualizer {
     }
   }
 
-  private calculateSize(obj: any): number {
+  private calculateSize(obj: unknown): number {
     return new Blob([JSON.stringify(obj)]).size;
   }
 
   private getMemoryUsage(): number {
     if (typeof window !== 'undefined' && 'performance' in window) {
-      const memory = (performance as any).memory;
+      const memory = (performance as { memory?: { usedJSHeapSize: number } }).memory;
       return memory ? memory.usedJSHeapSize : 0;
     }
     return 0;
   }
 
-  private getActionName(state: any, prevState: any): string {
-    // Implement logic to determine the action name
-    return 'state_update';
+  private getActionName(state: T, prevState: T): string {
+    // Compare state changes to determine action name
+    const stateChanges = Object.keys(state).filter(key => 
+      JSON.stringify(state[key as keyof T]) !== JSON.stringify(prevState[key as keyof T])
+    );
+    return stateChanges.length > 0 ? `update_${stateChanges.join('_')}` : 'state_update';
   }
 
   // Public API
-  public getGraph(): StateGraph {
+  public getGraph(): StateGraph<T> {
     return this.graph;
   }
 
-  public getTimeline(): StateTimeline[] {
+  public getTimeline(): StateTimeline<T>[] {
     return this.history;
   }
 
@@ -176,7 +179,7 @@ export class StateVisualizer {
     };
   }
 
-  public replayTimeline(startTime?: number, endTime?: number) {
+  public replayTimeline(startTime?: number, endTime?: number): StateTimeline<T>[] {
     const filteredHistory = this.history.filter(entry => {
       if (startTime && entry.timestamp < startTime) return false;
       if (endTime && entry.timestamp > endTime) return false;
@@ -198,9 +201,9 @@ export const createVisualizationStore = <T extends object>(
   store: StoreApi<T>,
   config?: VisualizerConfig
 ) => {
-  const visualizer = new StateVisualizer(store, config);
+  const visualizer = new StateVisualizer<T>(store, config);
 
-  return create<T>((set, get) => ({
+  return create<T>(() => ({
     ...store.getState(),
     visualize: {
       getGraph: () => visualizer.getGraph(),

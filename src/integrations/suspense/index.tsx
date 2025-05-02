@@ -1,8 +1,8 @@
 import React from "react";
 import { create, StoreApi, StateCreator, UseBoundStore } from "zustand";
-import { Suspense, useTransition } from "react";
+import { Suspense } from "react";
 
-interface SuspenseConfig<T> {
+interface SuspenseConfig {
   fallback?: React.ReactNode;
   timeoutMs?: number;
 }
@@ -17,9 +17,9 @@ interface SuspenseStore<T> {
 // Create a store with Suspense support
 export function createSuspenseStore<T extends object>(
   createState: StateCreator<T, [], []>,
-  config: SuspenseConfig<T> = {}
+  config: SuspenseConfig = {}
 ): SuspenseStore<T> {
-  const { fallback = <div>Loading...</div>, timeoutMs = 5000 } = config;
+  const { fallback = <div>Loading...</div> } = config;
 
   // Create the store
   const useStore = create<T>(createState);
@@ -29,7 +29,7 @@ export function createSuspenseStore<T extends object>(
     Component: React.ComponentType<P>
   ): React.ComponentType<P> => {
     return function SuspenseWrapper(props: P) {
-      const [isPending, startTransition] = useTransition();
+      // const [startTransition] = useTransition();
 
       return (
         <Suspense fallback={fallback}>

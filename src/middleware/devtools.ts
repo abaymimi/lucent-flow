@@ -1,5 +1,18 @@
 import { StoreApi } from 'zustand';
 
+interface ReduxDevTools {
+  connect: (options: { name: string; trace: boolean }) => {
+    init: (state: unknown) => void;
+    send: (action: string, state: unknown) => void;
+  };
+}
+
+declare global {
+  interface Window {
+    __REDUX_DEVTOOLS_EXTENSION__?: ReduxDevTools;
+  }
+}
+
 export const devtools = <T extends object>(
   store: StoreApi<T>,
   options?: {
@@ -14,7 +27,7 @@ export const devtools = <T extends object>(
   }
 
   // Initialize Redux DevTools
-  const devTools = (window as any).__REDUX_DEVTOOLS_EXTENSION__?.connect({
+  const devTools = window.__REDUX_DEVTOOLS_EXTENSION__?.connect({
     name,
     trace: true,
   });
@@ -28,7 +41,7 @@ export const devtools = <T extends object>(
   devTools.init(store.getState());
 
   return (set: StoreApi<T>['setState']) => {
-    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => {
+    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
       const nextState = typeof partial === 'function' 
         ? (partial as (state: T) => T | Partial<T>)(store.getState())
         : partial;

@@ -1,34 +1,32 @@
-import { create, StateCreator, StoreApi } from 'zustand';
-import { createHydration } from '../../utils/hydration';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
 import NetInfo from '@react-native-community/netinfo';
 import { AppState, AppStateStatus } from 'react-native';
 
 // Types
-interface StorageAdapter {
-  getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<void>;
-  removeItem: (key: string) => Promise<void>;
-}
+// interface StorageAdapter {
+//   getItem: (key: string) => Promise<string | null>;
+//   setItem: (key: string, value: string) => Promise<void>;
+//   removeItem: (key: string) => Promise<void>;
+// }
 
-interface ReactNativeConfig {
-  storage?: StorageAdapter;
-  retryStrategy?: {
-    maxRetries: number;
-    backoffFactor: number;
-    initialDelay: number;
-    maxDelay?: number;
-  };
-  batchStorage?: boolean;
-  batchSize?: number;
-  backgroundSync?: boolean;
-  syncInterval?: number;
-  storageOptions?: {
-    size?: number;
-    autoCleanup?: boolean;
-    cleanupInterval?: number;
-  };
-}
+// interface ReactNativeConfig {
+//   storage?: StorageAdapter;
+//   retryStrategy?: {
+//     maxRetries: number;
+//     backoffFactor: number;
+//     initialDelay: number;
+//     maxDelay?: number;
+//   };
+//   batchStorage?: boolean;
+//   batchSize?: number;
+//   backgroundSync?: boolean;
+//   syncInterval?: number;
+//   storageOptions?: {
+//     size?: number;
+//     autoCleanup?: boolean;
+//     cleanupInterval?: number;
+//   };
+// }
 
 interface ReactNativeState {
   isOnline: boolean;
@@ -41,60 +39,60 @@ interface ReactNativeState {
 type StoreState<T> = T & ReactNativeState;
 
 // Default storage adapter
-const defaultStorage: StorageAdapter = {
-  getItem: async (key: string) => {
-    try {
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.error('Error reading from storage:', error);
-      return null;
-    }
-  },
-  setItem: async (key: string, value: string) => {
-    try {
-      await AsyncStorage.setItem(key, value);
-    } catch (error) {
-      console.error('Error writing to storage:', error);
-    }
-  },
-  removeItem: async (key: string) => {
-    try {
-      await AsyncStorage.removeItem(key);
-    } catch (error) {
-      console.error('Error removing from storage:', error);
-    }
-  },
-};
+// const defaultStorage: StorageAdapter = {
+//   getItem: async (key: string) => {
+//     try {
+//       return await AsyncStorage.getItem(key);
+//     } catch (error) {
+//       console.error('Error reading from storage:', error);
+//       return null;
+//     }
+//   },
+//   setItem: async (key: string, value: string) => {
+//     try {
+//       await AsyncStorage.setItem(key, value);
+//     } catch (error) {
+//       console.error('Error writing to storage:', error);
+//     }
+//   },
+//   removeItem: async (key: string) => {
+//     try {
+//       await AsyncStorage.removeItem(key);
+//     } catch (error) {
+//       console.error('Error removing from storage:', error);
+//     }
+//   },
+// };
 
 // Default retry strategy
-const defaultRetryStrategy = {
-  maxRetries: 3,
-  backoffFactor: 2,
-  initialDelay: 1000,
-  maxDelay: 30000,
-};
+// const defaultRetryStrategy = {
+//   maxRetries: 3,
+//   backoffFactor: 2,
+//   initialDelay: 1000,
+//   maxDelay: 30000,
+// };
 
 // Create React Native store factory
 export const createReactNativeStore = <T extends object>(
   initialState: T,
-  config: ReactNativeConfig = {}
+//   config: ReactNativeConfig = {}
 ) => {
-  const {
-    storage = defaultStorage,
-    retryStrategy = defaultRetryStrategy,
-    batchStorage = true,
-    batchSize = 10,
-    backgroundSync = true,
-    syncInterval = 300000,
-    storageOptions = {
-      size: 10 * 1024 * 1024, // 10MB
-      autoCleanup: true,
-      cleanupInterval: 86400000, // 24 hours
-    },
-  } = config;
+//   const {
+//     storage = defaultStorage,
+//     retryStrategy = defaultRetryStrategy,
+//     batchStorage = true,
+//     batchSize = 10,
+//     backgroundSync = true,
+//     syncInterval = 300000,
+//     storageOptions = {
+//       size: 10 * 1024 * 1024, // 10MB
+//       autoCleanup: true,
+//       cleanupInterval: 86400000, // 24 hours
+//     },
+//   } = config;
 
   // Create store with offline support
-  const useStore = create<StoreState<T>>((set) => ({
+  const useStore = create<StoreState<T>>(() => ({
     ...initialState,
     // Add React Native specific state
     isOnline: true,

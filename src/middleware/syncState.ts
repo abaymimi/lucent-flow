@@ -13,6 +13,20 @@ interface SyncState {
   paused: boolean;
 }
 
+interface TimestampedState {
+  lastUpdated?: number;
+  [key: string]: unknown;
+}
+
+interface SyncStateMethods<T> {
+  sync: () => void;
+  pause: () => void;
+  resume: () => void;
+  onConflict: (handler: (localState: T, remoteState: T) => T) => void;
+  isSyncing: () => boolean;
+  getLastSync: () => number;
+}
+
 export const syncState = <T extends object>(
   store: StoreApi<T>,
   config: SyncStateConfig
@@ -67,8 +81,8 @@ export const syncState = <T extends object>(
         store.setState(resolvedState);
       } else {
         // Default conflict resolution: use the most recent state
-        const localTimestamp = (localState as any).lastUpdated || 0;
-        const remoteTimestamp = (remoteState as any).lastUpdated || 0;
+        const localTimestamp = (localState as TimestampedState).lastUpdated || 0;
+        const remoteTimestamp = (remoteState as TimestampedState).lastUpdated || 0;
 
         if (remoteTimestamp > localTimestamp) {
           store.setState(remoteState);
@@ -94,7 +108,7 @@ export const syncState = <T extends object>(
 
     // Remove blacklisted properties
     blacklist.forEach((key) => {
-      delete (filteredState as any)[key];
+      delete (filteredState as Record<string, unknown>)[key];
     });
 
     broadcast(filteredState);
@@ -115,7 +129,7 @@ export const syncState = <T extends object>(
   };
 
   // Add sync methods to store
-  (store as any).syncState = {
+  (store as StoreApi<T> & { syncState: SyncStateMethods<T> }).syncState = {
     sync,
     pause,
     resume,

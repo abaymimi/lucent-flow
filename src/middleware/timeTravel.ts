@@ -14,6 +14,13 @@ interface TimeTravelConfig {
   recordActions?: boolean;
 }
 
+interface ReduxDevTools {
+  connect: (options: { name: string; trace?: boolean }) => {
+    init: (state: unknown) => void;
+    send: (action: string, state: unknown) => void;
+  };
+}
+
 export const timeTravel = <T extends object>(
   store: StoreApi<T>,
   config: TimeTravelConfig = {}
@@ -31,8 +38,9 @@ export const timeTravel = <T extends object>(
 
   // Initialize Redux DevTools if enabled
   const devTools = enableDevTools
-    ? (window as any).__REDUX_DEVTOOLS_EXTENSION__?.connect({
+    ? ((window as unknown) as { __REDUX_DEVTOOLS_EXTENSION__?: ReduxDevTools }).__REDUX_DEVTOOLS_EXTENSION__?.connect({
         name: 'Lucent-Flow Time Travel',
+        trace: false
       })
     : null;
 
@@ -103,7 +111,7 @@ export const timeTravel = <T extends object>(
   const replayFrom = (index: number) => {
     if (index < 0 || index >= timeTravelState.actions.length) return;
 
-    const currentState = timeTravelState.present;
+    // const currentState = timeTravelState.present;
     const actionsToReplay = timeTravelState.actions.slice(index);
 
     // Reset to the state at the given index
@@ -125,7 +133,24 @@ export const timeTravel = <T extends object>(
   };
 
   // Add time-travel methods to store
-  (store as any).timeTravel = {
+  const storeWithTimeTravel = store as StoreApi<T> & {
+    timeTravel: {
+      back: () => void;
+      forward: () => void;
+      jumpTo: (index: number) => void;
+      replayFrom: (index: number) => void;
+      clearHistory: () => void;
+      getCurrentIndex: () => number;
+      getHistory: () => {
+        past: T[];
+        present: T;
+        future: T[];
+        actions: string[];
+      };
+    };
+  };
+
+  storeWithTimeTravel.timeTravel = {
     back,
     forward,
     jumpTo,

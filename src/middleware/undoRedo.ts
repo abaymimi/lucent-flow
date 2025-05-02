@@ -6,6 +6,11 @@ interface HistoryState<T> {
   future: T[];
 }
 
+interface UndoRedoMethods {
+  undo: () => void;
+  redo: () => void;
+}
+
 export const undoRedo = <T extends object>(
   store: StoreApi<T>,
   options?: {
@@ -54,11 +59,12 @@ export const undoRedo = <T extends object>(
   };
 
   // Add methods to store
-  (store as any).undo = undo;
-  (store as any).redo = redo;
+  const storeWithUndoRedo = store as StoreApi<T> & UndoRedoMethods;
+  storeWithUndoRedo.undo = undo;
+  storeWithUndoRedo.redo = redo;
 
   return (set: StoreApi<T>['setState']) => {
-    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => {
+    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
       const nextState = typeof partial === 'function' 
         ? (partial as (state: T) => T | Partial<T>)(store.getState())
         : partial;

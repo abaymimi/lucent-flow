@@ -4,7 +4,7 @@ interface HydrationConfig {
   storage?: 'localStorage' | 'indexedDB';
   key?: string;
   version?: number;
-  migrate?: (oldState: any) => any;
+  migrate?: (oldState: unknown) => unknown;
   blacklist?: string[];
   whitelist?: string[];
 }
@@ -12,6 +12,14 @@ interface HydrationConfig {
 interface HydrationState {
   isHydrated: boolean;
   version: number;
+}
+
+interface HydrationMethods<T> {
+  saveState: (state: T) => Promise<void>;
+  loadState: () => Promise<T | null>;
+  clearState: () => Promise<void>;
+  hydrate: () => Promise<void>;
+  isHydrated: () => boolean;
 }
 
 export const createHydration = <T extends object>(
@@ -36,7 +44,7 @@ export const createHydration = <T extends object>(
   const initIndexedDB = async () => {
     if (storage !== 'indexedDB') return;
 
-    return new Promise((resolve, reject) => {
+    return new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('lucent-flow-hydration', 1);
 
       request.onerror = () => reject(request.error);
@@ -58,12 +66,12 @@ export const createHydration = <T extends object>(
     // Apply blacklist/whitelist filters
     if (blacklist.length > 0) {
       blacklist.forEach((key) => {
-        delete (stateToSave as any)[key];
+        delete (stateToSave as Record<string, unknown>)[key];
       });
     } else if (whitelist.length > 0) {
       Object.keys(stateToSave).forEach((key) => {
         if (!whitelist.includes(key)) {
-          delete (stateToSave as any)[key];
+          delete (stateToSave as Record<string, unknown>)[key];
         }
       });
     }
@@ -75,7 +83,8 @@ export const createHydration = <T extends object>(
       }));
     } else {
       const db = await initIndexedDB();
-      const transaction = (db as IDBDatabase).transaction('state', 'readwrite');
+      if (!db) return;
+      const transaction = db.transaction('state', 'readwrite');
       const store = transaction.objectStore('state');
       store.put({
         state: stateToSave,
@@ -96,7 +105,8 @@ export const createHydration = <T extends object>(
         }
       } else {
         const db = await initIndexedDB();
-        const transaction = (db as IDBDatabase).transaction('state', 'readonly');
+        if (!db) return null;
+        const transaction = db.transaction('state', 'readonly');
         const store = transaction.objectStore('state');
         const request = store.get(key);
 
@@ -110,7 +120,7 @@ export const createHydration = <T extends object>(
 
       // Handle version migration
       if (migrate && savedState.version !== version) {
-        savedState.state = migrate(savedState.state);
+        savedState.state = migrate(savedState.state) as T;
         savedState.version = version;
         await saveState(savedState.state);
       }
@@ -128,7 +138,8 @@ export const createHydration = <T extends object>(
       localStorage.removeItem(key);
     } else {
       const db = await initIndexedDB();
-      const transaction = (db as IDBDatabase).transaction('state', 'readwrite');
+      if (!db) return;
+      const transaction = db.transaction('state', 'readwrite');
       const store = transaction.objectStore('state');
       store.delete(key);
     }
@@ -144,7 +155,7 @@ export const createHydration = <T extends object>(
   };
 
   // Add hydration methods to store
-  (store as any).hydration = {
+  (store as StoreApi<T> & { hydration: HydrationMethods<T> }).hydration = {
     saveState,
     loadState,
     clearState,

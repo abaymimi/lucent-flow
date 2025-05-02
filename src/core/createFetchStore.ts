@@ -69,7 +69,7 @@ export const createFetchStore = <T>(
   };
 
   const useFetch = (): FetchResult<T> => {
-    const { state, setState } = store.useStore();
+    const { state } = store.useStore();
 
     const refetch = async () => {
       await fetchData(true);

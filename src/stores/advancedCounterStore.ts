@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { withSelectors, withActions, immer } from '../utils/stateUtils';
+import {  immer } from '../utils/stateUtils';
 
 interface CounterState {
   count: number;
@@ -17,20 +17,20 @@ const selectors = {
 };
 
 // Action creators
-const actions = {
-  increment: () => (state: CounterState) => ({
-    count: state.count + 1,
-    history: [...state.history, state.count + 1],
-  }),
-  decrement: () => (state: CounterState) => ({
-    count: state.count - 1,
-    history: [...state.history, state.count - 1],
-  }),
-  reset: () => () => ({
-    count: 0,
-    history: [0],
-  }),
-};
+// const actions = {
+//   increment: () => (state: CounterState) => ({
+//     count: state.count + 1,
+//     history: [...state.history, state.count + 1],
+//   }),
+//   decrement: () => (state: CounterState) => ({
+//     count: state.count - 1,
+//     history: [...state.history, state.count - 1],
+//   }),
+//   reset: () => () => ({
+//     count: 0,
+//     history: [0],
+//   }),
+// };
 
 // Create store with immer for immutable updates
 const useCounterStore = create<CounterState>()(
@@ -45,7 +45,7 @@ const useCounterStore = create<CounterState>()(
       count: state.count - 1,
       history: [...state.history, state.count - 1],
     })),
-    reset: () => set((state) => ({
+    reset: () => set(() => ({
       count: 0,
       history: [0],
     })),
@@ -53,10 +53,10 @@ const useCounterStore = create<CounterState>()(
 );
 
 // Enhance store with selectors and actions
-const enhancedStore = withSelectors(
-  withActions(useCounterStore, actions),
-  selectors
-);
+// const enhancedStore = withSelectors(
+//   withActions(useCounterStore, actions),
+//   selectors
+// );
 
 // Create a hook that uses the enhanced store
 export const useEnhancedCounterStore = () => {

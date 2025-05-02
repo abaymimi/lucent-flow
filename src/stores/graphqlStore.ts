@@ -7,7 +7,7 @@ interface GraphQLStoreState<T> {
   loading: boolean;
   error: Error | null;
   fetchData: () => Promise<void>;
-  mutate: (mutation: any) => Promise<void>;
+  mutate: (mutation: string, variables?: Record<string, unknown>) => Promise<void>;
   subscribe: (callback: (data: T) => void) => () => void;
 }
 
@@ -44,10 +44,10 @@ export const createGraphQLStore = <T>(config: GraphQLStoreConfig<T>) => {
       }
     },
 
-    mutate: async (mutation) => {
+    mutate: async (mutation, variables) => {
       try {
         set({ loading: true, error: null });
-        const response = await client.mutate<T>(mutation) as GraphQLResponse<T>;
+        const response = await client.mutate<T>(mutation, variables) as GraphQLResponse<T>;
         
         if (response.errors) {
           throw new Error(response.errors[0].message);

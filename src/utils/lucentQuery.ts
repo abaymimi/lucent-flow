@@ -6,7 +6,6 @@ import {
 } from '../types/baseQuery';
 import { RequestDeduplicator } from './requestDeduplicator';
 import { OptimisticUpdates } from './optimisticUpdates';
-import { QueryBuilder } from './queryBuilder';
 
 const defaultValidateStatus = (status: number) => status >= 200 && status < 300;
 
@@ -23,7 +22,6 @@ export const lucentQuery = ({
 }: LucentQueryConfig = {}): LucentQueryFn => {
   const deduplicator = RequestDeduplicator.getInstance();
   const optimisticUpdates = OptimisticUpdates.getInstance();
-  const queryBuilder = new QueryBuilder(baseUrl);
 
   return async (args: LucentQueryArgs): Promise<LucentQueryResult> => {
     try {
@@ -79,7 +77,7 @@ export const lucentQuery = ({
         const requestConfig: RequestInit = {
           method,
           headers: preparedHeaders,
-          ...(body && { body: JSON.stringify(body) }),
+          ...(body ? { body: JSON.stringify(body) } : {}),
         };
 
         const controller = new AbortController();

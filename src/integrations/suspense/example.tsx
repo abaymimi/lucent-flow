@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { createSuspenseStore } from "./index";
 
 interface DataState {
-  data: any;
+  data: Record<string, unknown>;
   loading: boolean;
   error: Error | null;
   fetchData: () => Promise<void>;
@@ -11,7 +11,7 @@ interface DataState {
 // 1. Create a store with Suspense support
 const { useStore, withSuspense } = createSuspenseStore<DataState>(
   (set) => ({
-    data: null,
+    data: {},
     loading: false,
     error: null,
     fetchData: async () => {
@@ -38,7 +38,7 @@ function DataComponent() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  });
 
   return <div>{JSON.stringify(data)}</div>;
 }

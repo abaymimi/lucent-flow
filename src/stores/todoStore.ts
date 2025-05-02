@@ -24,7 +24,7 @@ const fetchTodos = async (): Promise<Todo[]> => {
       _limit: 10, // Example of using query params
     },
   });
-  return result.data;
+  return result.data as Todo[];
 };
 
 export const todoStore = createFetchStore<Todo[]>('todos', fetchTodos, {

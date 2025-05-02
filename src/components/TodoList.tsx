@@ -6,7 +6,7 @@ const TodoList = () => {
 
   useEffect(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
   if (isLoading) {
     return <div>Loading todos...</div>;

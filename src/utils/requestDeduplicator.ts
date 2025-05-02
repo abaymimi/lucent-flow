@@ -1,12 +1,12 @@
-interface PendingRequest {
-  promise: Promise<any>;
+interface PendingRequest<T> {
+  promise: Promise<T>;
   timestamp: number;
 }
 
 export class RequestDeduplicator {
   private static instance: RequestDeduplicator;
-  private pendingRequests: Map<string, PendingRequest> = new Map();
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private pendingRequests: Map<string, PendingRequest<unknown>> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {}
@@ -18,7 +18,7 @@ export class RequestDeduplicator {
     return RequestDeduplicator.instance;
   }
 
-  private getRequestKey(args: any): string {
+  private getRequestKey(args: unknown): string {
     return JSON.stringify(args);
   }
 
@@ -35,14 +35,14 @@ export class RequestDeduplicator {
     if (useCache) {
       const cached = this.cache.get(key);
       if (cached && this.isCacheValid(cached.timestamp)) {
-        return cached.data;
+        return cached.data as T;
       }
     }
 
     // Check for pending request
     const pending = this.pendingRequests.get(key);
     if (pending) {
-      return pending.promise;
+      return pending.promise as Promise<T>;
     }
 
     // Create new request

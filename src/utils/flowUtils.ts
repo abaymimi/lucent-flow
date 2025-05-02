@@ -1,9 +1,8 @@
-import { StateCreator, StoreApi, create } from 'zustand';
+import {  StoreApi } from 'zustand';
 
 // Type definitions
 type EqualityFn<T> = (a: T, b: T) => boolean;
 type Selector<T, R> = (state: T) => R;
-type Action<T, P = void> = (payload: P) => (state: T) => Partial<T>;
 type Middleware<T> = (set: StoreApi<T>['setState'], get: StoreApi<T>['getState'], store: StoreApi<T>) => StoreApi<T>['setState'];
 
 // Example state interface
@@ -21,17 +20,17 @@ interface State {
 }
 
 // 1. Custom Memoization
-interface MemoOptions {
+interface MemoOptions<T> {
   maxSize?: number;
   ttl?: number;
-  equalityFn?: EqualityFn<any>;
+  equalityFn?: EqualityFn<T>;
 }
 
 export const lucentMemo = <T, R>(
   fn: (arg: T) => R,
-  options: MemoOptions = {}
+  options: MemoOptions<T> = {}
 ) => {
-  const { maxSize = 100, ttl = 0, equalityFn = (a, b) => a === b } = options;
+  const { ttl = 0, equalityFn = (a, b) => a === b } = options;
   let cache: { value: R; arg: T; timestamp: number } | null = null;
 
   return (arg: T): R => {
@@ -51,21 +50,21 @@ export const lucentMemo = <T, R>(
 };
 
 // 2. Custom Selector Creator
-export const lucentSelector = <T, R>(
-  selectors: Selector<T, any>[],
-  combiner: (...args: any[]) => R
+export const lucentSelector = <T, R, S extends unknown[]>(
+  selectors: Selector<T, S[number]>[],
+  combiner: (...args: S) => R
 ) => {
   const memoizedSelectors = selectors.map(selector => lucentMemo(selector));
   
   return (state: T): R => {
     const selectedValues = memoizedSelectors.map(selector => selector(state));
-    return combiner(...selectedValues);
+    return combiner(...selectedValues as S);
   };
 };
 
 // 3. Custom Batch Updates
 export const lucentBatch = <T extends object>(): Middleware<T> => {
-  return (set, get, store) => {
+  return (set, get) => {
     let batchQueue: (() => Partial<T>)[] = [];
     let isBatching = false;
 
@@ -106,8 +105,8 @@ export const lucentShallow = <T extends object>(): EqualityFn<T> => {
     if (Object.keys(a).length !== Object.keys(b).length) return false;
     
     return Object.keys(a).every(key => {
-      const aValue = (a as any)[key];
-      const bValue = (b as any)[key];
+      const aValue = (a as Record<string, unknown>)[key];
+      const bValue = (b as Record<string, unknown>)[key];
       return aValue === bValue;
     });
   };
@@ -117,7 +116,7 @@ export const lucentShallow = <T extends object>(): EqualityFn<T> => {
 export const lucentDebounce = <T extends object>(
   wait: number
 ): Middleware<T> => {
-  return (set, get, store) => {
+  return (set, get) => {
     let timeoutId: NodeJS.Timeout | null = null;
     let pendingUpdates: (() => Partial<T>)[] = [];
 
@@ -162,7 +161,7 @@ export const lucentDevTools = <T extends object>(
 ): Middleware<T> => {
   const { name = 'Lucent Store', enabled = true, trace = false } = options;
 
-  return (set, get, store) => {
+  return (set, get) => {
     if (!enabled) return set;
 
     const devTools = {
@@ -201,41 +200,41 @@ export const lucentDevTools = <T extends object>(
 // Example usage:
 
 // 1. Using custom memoization
-const expensiveComputation = lucentMemo(
-  (data: number[]) => data.reduce((sum, num) => sum + num, 0),
-  { ttl: 1000 }
-);
+// const expensiveComputation = lucentMemo(
+//   (data: number[]) => data.reduce((sum, num) => sum + num, 0),
+//   { ttl: 1000 }
+// );
 
 // 2. Using custom selector
-const complexSelector = lucentSelector(
-  [
-    (state: State) => state.items,
-    (state: State) => state.filters,
-  ],
-  (items: State['items'], filters: State['filters']) => 
-    items.filter(item => item.price > filters.minPrice)
-);
+// const complexSelector = lucentSelector(
+//   [
+//     (state: State) => state.items,
+//     (state: State) => state.filters,
+//   ],
+//   (items: State['items'], filters: State['filters']) => 
+//     items.filter(item => item.price > filters.minPrice)
+// );
 
 // 3. Using custom batch
-const useStore = create<State>()(
-  (set, get, store) => {
-    const batchMiddleware = lucentBatch<State>();
-    const batchedSet = batchMiddleware(set, get, store);
+// const useStore = create<State>()(
+//   (set, get, store) => {
+//     const batchMiddleware = lucentBatch<State>();
+//     const batchedSet = batchMiddleware(set, get, store);
     
-    return {
-      items: [],
-      filters: { minPrice: 0, category: 'all' },
-      query: '',
-      addItems: (newItems: State['items']) => {
-        batchedSet((state) => ({
-          ...state,
-          items: [...state.items, ...newItems],
-          lastUpdated: new Date(),
-        }));
-      },
-    };
-  }
-);
+//     return {
+//       items: [],
+//       filters: { minPrice: 0, category: 'all' },
+//       query: '',
+//       addItems: (newItems: State['items']) => {
+//         batchedSet((state) => ({
+//           ...state,
+//           items: [...state.items, ...newItems],
+//           lastUpdated: new Date(),
+//         }));
+//       },
+//     };
+//   }
+// );
 
 // 4. Using custom shallow comparison
 const isEqual = lucentShallow<State>();
@@ -252,37 +251,37 @@ const state2: State = {
 console.log(isEqual(state1, state2)); // true
 
 // 5. Using custom debounce
-const useSearchStore = create<State>()(
-  (set, get, store) => {
-    const debounceMiddleware = lucentDebounce<State>(300);
-    const debouncedSet = debounceMiddleware(set, get, store);
+// const useSearchStore = create<State>()(
+//   (set, get, store) => {
+//     const debounceMiddleware = lucentDebounce<State>(300);
+//     const debouncedSet = debounceMiddleware(set, get, store);
     
-    return {
-      items: [],
-      filters: { minPrice: 0, category: 'all' },
-      query: '',
-      setQuery: (query: string) => debouncedSet((state) => ({
-        ...state,
-        query,
-      })),
-    };
-  }
-);
+//     return {
+//       items: [],
+//       filters: { minPrice: 0, category: 'all' },
+//       query: '',
+//       setQuery: (query: string) => debouncedSet((state) => ({
+//         ...state,
+//         query,
+//       })),
+//     };
+//   }
+// );
 
 // 6. Using custom devtools
-const useDevStore = create<State>()(
-  (set, get, store) => {
-    const devToolsMiddleware = lucentDevTools<State>({ name: 'MyStore', trace: true });
-    const devToolsSet = devToolsMiddleware(set, get, store);
+// const useDevStore = create<State>()(
+//   (set, get, store) => {
+//     const devToolsMiddleware = lucentDevTools<State>({ name: 'MyStore', trace: true });
+//     const devToolsSet = devToolsMiddleware(set, get, store);
     
-    return {
-      items: [],
-      filters: { minPrice: 0, category: 'all' },
-      query: '',
-      addItem: (item: State['items'][0]) => devToolsSet((state) => ({
-        ...state,
-        items: [...state.items, item],
-      })),
-    };
-  }
-); 
+//     return {
+//       items: [],
+//       filters: { minPrice: 0, category: 'all' },
+//       query: '',
+//       addItem: (item: State['items'][0]) => devToolsSet((state) => ({
+//         ...state,
+//         items: [...state.items, item],
+//       })),
+//     };
+//   }
+// ); 

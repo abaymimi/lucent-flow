@@ -13,7 +13,7 @@ export class QueryBuilder {
     return this;
   }
 
-  where(conditions: Record<string, any>): this {
+  where(conditions: Record<string, string | number | boolean>): this {
     this.query.params = {
       ...this.query.params,
       ...conditions,

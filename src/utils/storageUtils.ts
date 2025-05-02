@@ -1,5 +1,4 @@
 import { StoreApi } from 'zustand';
-import { Draft } from 'immer';
 
 // Storage backend types
 export type StorageBackend = 'localStorage' | 'indexedDB';
@@ -18,13 +17,13 @@ export interface StorageConfig {
 export interface StorageMigration {
   fromVersion: string;
   toVersion: string;
-  migrate: (data: any) => any;
+  migrate: <T>(data: T) => T;
 }
 
 // Storage backend interface
 interface StorageBackendInterface {
-  get: (key: string) => Promise<any>;
-  set: (key: string, value: any) => Promise<void>;
+  get: <T>(key: string) => Promise<T | null>;
+  set: <T>(key: string, value: T) => Promise<void>;
   remove: (key: string) => Promise<void>;
   clear: () => Promise<void>;
   keys: () => Promise<string[]>;
@@ -42,13 +41,13 @@ class LocalStorageBackend implements StorageBackendInterface {
     return `${this.prefix}${key}`;
   }
 
-  async get(key: string): Promise<any> {
+  async get<T>(key: string): Promise<T | null> {
     const prefixedKey = this.getPrefixedKey(key);
     const value = localStorage.getItem(prefixedKey);
     return value ? JSON.parse(value) : null;
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set<T>(key: string, value: T): Promise<void> {
     const prefixedKey = this.getPrefixedKey(key);
     localStorage.setItem(prefixedKey, JSON.stringify(value));
   }
@@ -109,7 +108,7 @@ class IndexedDBBackend implements StorageBackendInterface {
     });
   }
 
-  async get(key: string): Promise<any> {
+  async get<T>(key: string): Promise<T | null> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readonly');
@@ -121,7 +120,7 @@ class IndexedDBBackend implements StorageBackendInterface {
     });
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set<T>(key: string, value: T): Promise<void> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readwrite');
@@ -204,7 +203,7 @@ class EncryptionUtils {
     return this.key;
   }
 
-  async encrypt(data: any): Promise<string> {
+  async encrypt<T>(data: T): Promise<string> {
     const key = await this.getKey();
     const encoder = new TextEncoder();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -225,7 +224,7 @@ class EncryptionUtils {
     return btoa(String.fromCharCode(...result));
   }
 
-  async decrypt(encryptedData: string): Promise<any> {
+  async decrypt<T>(encryptedData: string): Promise<T> {
     const key = await this.getKey();
     const encryptedArray = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
     const iv = encryptedArray.slice(0, 12);
@@ -255,18 +254,14 @@ class StorageVersioning {
     this.migrations.push(migration);
   }
 
-  async migrate(data: any, fromVersion: string): Promise<any> {
-    if (fromVersion === this.currentVersion) return data;
-
-    const applicableMigrations = this.migrations
-      .filter(m => m.fromVersion === fromVersion)
-      .sort((a, b) => a.toVersion.localeCompare(b.toVersion));
-
+  async migrate<T>(data: T, fromVersion: string): Promise<T> {
     let currentData = data;
-    for (const migration of applicableMigrations) {
-      currentData = await migration.migrate(currentData);
+    for (const migration of this.migrations) {
+      if (migration.fromVersion === fromVersion) {
+        currentData = migration.migrate(currentData);
+        fromVersion = migration.toVersion;
+      }
     }
-
     return currentData;
   }
 }
@@ -294,49 +289,26 @@ export class StorageManager {
   }
 
   async get<T>(key: string): Promise<T | null> {
-    try {
-      let data = await this.backend.get(key);
-      if (!data) return null;
+    let data = await this.backend.get<string>(key);
+    if (!data) return null;
 
-      // Check version and migrate if needed
-      if (this.config.migrateOnVersionChange && data.version !== this.config.version) {
-        data = await this.versioning.migrate(data, data.version);
-        await this.set(key, data);
-      }
-
-      // Decrypt if encrypted
-      if (this.encryption && data.encrypted) {
-        data = await this.encryption.decrypt(data.data);
-      }
-
-      return data as T;
-    } catch (error) {
-      console.error('Storage get error:', error);
-      return null;
+    if (this.encryption) {
+      data = await this.encryption.decrypt<string>(data);
     }
+
+    const parsedData = JSON.parse(data);
+    if (this.config.migrateOnVersionChange) {
+      return this.versioning.migrate<T>(parsedData, this.config.version);
+    }
+    return parsedData;
   }
 
-  async set(key: string, value: any): Promise<void> {
-    try {
-      let data = {
-        ...value,
-        version: this.config.version,
-        timestamp: Date.now(),
-      };
-
-      // Encrypt if encryption is enabled
-      if (this.encryption) {
-        data = {
-          encrypted: true,
-          data: await this.encryption.encrypt(data),
-        };
-      }
-
-      await this.backend.set(key, data);
-    } catch (error) {
-      console.error('Storage set error:', error);
-      throw error;
+  async set<T>(key: string, value: T): Promise<void> {
+    let data = JSON.stringify(value);
+    if (this.encryption) {
+      data = await this.encryption.encrypt(data);
     }
+    await this.backend.set(key, data);
   }
 
   async remove(key: string): Promise<void> {

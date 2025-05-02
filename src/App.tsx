@@ -1,6 +1,4 @@
 import React from "react";
-import Counter from "./components/Counter";
-import AdvancedPostList from "./components/AdvancedPostList";
 import { GraphQLPostList } from "./components/GraphQLPostList";
 const App = () => {
   return (

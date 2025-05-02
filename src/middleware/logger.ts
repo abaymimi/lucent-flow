@@ -12,7 +12,7 @@ export const logger = <T extends object>(
   ) => {
     if (!enabled) return fn(set, get, store);
 
-    const newSet = (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => {
+    const newSet = (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
       if (logActions) {
         console.group('State Update');
         console.log('Action:', typeof partial === 'function' ? 'function' : 'object');

@@ -1,4 +1,4 @@
-import { StateCreator, StoreApi, create } from 'zustand';
+import { create, StoreApi } from 'zustand';
 
 // Example state interface
 interface State {
@@ -23,52 +23,53 @@ interface Cache<T, R> {
 }
 
 // Memoization options
-interface MemoOptions {
+interface MemoOptions<T> {
   maxSize?: number;
   ttl?: number; // Time to live in milliseconds
-  equalityFn?: (a: any, b: any) => boolean;
+  equalityFn?: EqualityFn<T>;
 }
 
+// Type for memoized selector function
+export type MemoizedSelector<T, R> = (state: T) => R;
+
+// Type for equality function
+export type EqualityFn<T> = (a: T, b: T) => boolean;
+
 // Default equality function
-const defaultEqualityFn = (a: any, b: any) => a === b;
+const defaultEqualityFn = <T>(a: T, b: T): boolean => a === b;
 
 // Create a memoized selector
-export const createMemoizedSelector = <T, R>(
+export const createMemoizedSelector = <T extends object, R>(
   selector: Selector<T, R>,
-  options: MemoOptions = {}
-) => {
-  const { maxSize = 100, ttl = 0, equalityFn = defaultEqualityFn } = options;
-  let cache: Cache<T, R> | null = null;
+  equalityFn: EqualityFn<R> = defaultEqualityFn,
+  options: MemoOptions<R> = {}
+): MemoizedSelector<T, R> => {
+  const {  ttl = 0 } = options;
+  let lastResult: R | undefined;
+  let lastState: T | undefined;
+  let lastTimestamp = Date.now();
 
-  return (state: T): R => {
-    // Check if cache exists and is valid
-    if (cache) {
-      const isExpired = ttl > 0 && Date.now() - cache.timestamp > ttl;
-      const isEqual = equalityFn(cache.dependencies, state);
-
-      if (!isExpired && isEqual) {
-        return cache.value;
-      }
+  return (state: T) => {
+    const currentTime = Date.now();
+    if (lastState === state && (!ttl || currentTime - lastTimestamp <= ttl)) {
+      return lastResult as R;
     }
 
-    // Compute new value
-    const value = selector(state);
-    
-    // Update cache
-    cache = {
-      value,
-      dependencies: state,
-      timestamp: Date.now(),
-    };
+    const result = selector(state);
+    if (lastResult === undefined || !equalityFn(lastResult, result)) {
+      lastResult = result;
+      lastState = state;
+      lastTimestamp = currentTime;
+    }
 
-    return value;
+    return lastResult;
   };
 };
 
 // Create a memoized action creator
 export const createMemoizedAction = <T, P>(
   action: ActionCreator<T, P>,
-  options: MemoOptions = {}
+  options: MemoOptions<T> = {}
 ) => {
   const { maxSize = 100, ttl = 0, equalityFn = defaultEqualityFn } = options;
   const cache = new Map<string, Cache<T, Partial<T>>>();
@@ -109,16 +110,65 @@ export const createMemoizedAction = <T, P>(
   };
 };
 
+// Create a memoized store
+export const createMemoizedStore = <T extends object, S extends Record<string, MemoizedSelector<T, unknown>>>(
+  store: StoreApi<T>,
+  config?: {
+    selectors: S;
+    equalityFns: { [K in keyof S]: EqualityFn<ReturnType<S[K]>> };
+  }
+): StoreApi<T & { [K in keyof S]: ReturnType<S[K]> }> => {
+  const { selectors = {} as S, equalityFns = {} as { [K in keyof S]: EqualityFn<ReturnType<S[K]>> } } = config || {};
+
+  const memoizedStore = {
+    ...store,
+    getState: () => {
+      const state = store.getState();
+      return new Proxy(state as T & { [K in keyof S]: ReturnType<S[K]> }, {
+        get: (target, prop) => {
+          if (typeof prop === 'string' && prop in selectors) {
+            const selector = selectors[prop as keyof S];
+            const equalityFn = equalityFns[prop as keyof S] || defaultEqualityFn;
+            const result = selector(state) as ReturnType<S[keyof S]>;
+            return createMemoizedSelector(() => result, equalityFn)(state);
+          }
+          return target[prop as keyof T];
+        },
+      });
+    },
+  };
+
+  return memoizedStore as StoreApi<T & { [K in keyof S]: ReturnType<S[K]> }>;
+};
+
+// Create a memoized selector factory
+export const createSelectorFactory = <T extends object>() => {
+  return <R>(selector: (state: T) => R, equalityFn?: EqualityFn<R>) => {
+    return createMemoizedSelector(selector, equalityFn);
+  };
+};
+
+// Create a memoized store factory
+export const createStoreFactory = <T extends object>() => {
+  return <S extends Record<string, MemoizedSelector<T, unknown>>>(
+    store: StoreApi<T>,
+    config?: {
+      selectors: S;
+      equalityFns: { [K in keyof S]: EqualityFn<ReturnType<S[K]>> };
+    }
+  ) => {
+    return createMemoizedStore(store, config);
+  };
+};
+
 // Example usage:
 
 // 1. Memoized Selector
-const expensiveSelector = createMemoizedSelector(
-  (state: State) => state.items.filter((item: { price: number }) => item.price > 100),
-  {
-    ttl: 1000, // Cache for 1 second
-    maxSize: 50, // Keep last 50 results
-    equalityFn: (a, b) => a.items === b.items, // Custom equality check
-  }
+const expensiveSelector = createMemoizedSelector<State, Array<State['items'][0]>>(
+  (state: State) => state.items.filter((item) => item.price > 100),
+  (a: Array<State['items'][0]>, b: Array<State['items'][0]>) => 
+    a.length === b.length && a.every((item, index) => item.id === b[index].id),
+  { ttl: 1000, maxSize: 50 }
 );
 
 // 2. Memoized Action
@@ -141,4 +191,47 @@ const useStore = create<State>()((set: (fn: (state: State) => Partial<State>) =>
   getExpensiveItems: () => expensiveSelector(useStore.getState()),
   // Memoized action
   updateItem: (id: string) => set(updateItem(id)),
-})); 
+}));
+
+// interface Product {
+//   id: string;
+//   price: number;
+//   updated?: boolean;
+// }
+
+// interface ProductState {
+//   products: Product[];
+//   loading: boolean;
+//   error: string | null;
+// }
+
+// Create a store
+// const useProductStore = create<ProductState>(() => ({
+//   products: [],
+//   loading: false,
+//   error: null,
+// }));
+
+// Create memoized selectors
+// const getTotalPrice = (state: ProductState) =>
+//   state.products.reduce((sum, product) => sum + product.price, 0);
+
+// const getUpdatedProducts = (state: ProductState) =>
+//   state.products.filter((product) => product.updated);
+
+// Create a memoized store with selectors
+// const memoizedStore = createMemoizedStore(useProductStore, {
+//   selectors: {
+//     totalPrice: getTotalPrice,
+//     updatedProducts: getUpdatedProducts,
+//   },
+//   equalityFns: {
+//     totalPrice: (a: number, b: number) => a === b,
+//     updatedProducts: (a: Product[], b: Product[]) =>
+//       a.length === b.length && a.every((product, index) => product.id === b[index].id),
+//   },
+// });
+
+// Use the memoized store
+// const totalPrice = memoizedStore.getState().totalPrice;
+// const updatedProducts = memoizedStore.getState().updatedProducts; 
