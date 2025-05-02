@@ -1,6 +1,6 @@
-# Contributing to Lucent
+# Contributing to Lucent-Flow
 
-Thank you for your interest in contributing to Lucent! This document provides guidelines and instructions for contributing to our state management library.
+Thank you for your interest in contributing to Lucent-Flow! This document provides guidelines and instructions for contributing to our state management library.
 
 ## Table of Contents
 
@@ -23,8 +23,8 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/your-username/lucent.git
-   cd lucent
+   git clone https://github.com/your-username/lucent-flow.git
+   cd lucent-flow
    ```
 3. Install dependencies:
    ```bash
@@ -58,7 +58,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 ## Project Structure
 
 ```
-lucent/
+lucent-flow/
 ├── src/
 │   ├── core/         # Core state management logic
 │   ├── utils/        # Utility functions and helpers
@@ -201,5 +201,5 @@ Feel free to open an issue or contact the maintainers if you have any questions 
 
 ## License
 
-By contributing to Lucent, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
+By contributing to Lucent-Flow, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
 ```
