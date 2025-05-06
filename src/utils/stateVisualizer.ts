@@ -1,5 +1,6 @@
-import { StoreApi } from 'zustand';
-import { create } from 'zustand';
+import { StoreApi, createStore as create } from "../core/createStore";
+
+;
 
 export interface StateNode<T = unknown> {
   id: string;
@@ -71,9 +72,12 @@ export class StateVisualizer<T extends object> {
     }
 
     // Subscribe to store changes
-    this.store.subscribe((state, prevState) => {
+    let prevState = this.store.getState();
+    this.store.subscribe(() => {
+      const state = this.store.getState();
       this.updateGraph(state);
       this.addToTimeline(state, prevState);
+      prevState = state;
     });
   }
 

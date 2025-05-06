@@ -22,7 +22,7 @@ const AdvancedPostList: React.FC = () => {
     fetchPosts,
     createPost,
     deletePost,
-  } = useAdvancedPostStore();
+  } = useAdvancedPostStore.getState();
 
   console.log("loading..", storeLoading);
   useEffect(() => {

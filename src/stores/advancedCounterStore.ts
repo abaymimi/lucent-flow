@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import {  immer } from '../utils/stateUtils';
+import { createStore as create } from '../core/createStore';
+// import { devtools } from '../middleware/devtools';
 
 interface CounterState {
   count: number;
@@ -32,25 +32,26 @@ const selectors = {
 //   }),
 // };
 
-// Create store with immer for immutable updates
-const useCounterStore = create<CounterState>()(
-  immer((set) => ({
+// Create store with immutable updates
+const useCounterStore = create<CounterState>((set) => ({
+  count: 0,
+  history: [0],
+  increment: () => set((state) => ({
+    ...state,
+    count: state.count + 1,
+    history: [...state.history, state.count + 1],
+  })),
+  decrement: () => set((state) => ({
+    ...state,
+    count: state.count - 1,
+    history: [...state.history, state.count - 1],
+  })),
+  reset: () => set((state) => ({
+    ...state,
     count: 0,
     history: [0],
-    increment: () => set((state) => ({
-      count: state.count + 1,
-      history: [...state.history, state.count + 1],
-    })),
-    decrement: () => set((state) => ({
-      count: state.count - 1,
-      history: [...state.history, state.count - 1],
-    })),
-    reset: () => set(() => ({
-      count: 0,
-      history: [0],
-    })),
-  }))
-);
+  })),
+}));
 
 // Enhance store with selectors and actions
 // const enhancedStore = withSelectors(
@@ -58,14 +59,13 @@ const useCounterStore = create<CounterState>()(
 //   selectors
 // );
 
-// Create a hook that uses the enhanced store
+// Create a hook that uses the store with selectors
 export const useEnhancedCounterStore = () => {
-  const state = useCounterStore();
-  const enhancedState = {
+  const state = useCounterStore.getState();
+  return {
     ...state,
     isEven: selectors.isEven(state),
     historyLength: selectors.historyLength(state),
     lastValue: selectors.lastValue(state),
   };
-  return enhancedState;
 }; 

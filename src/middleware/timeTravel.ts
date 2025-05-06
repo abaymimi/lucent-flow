@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from "../core/createStore";
 
 interface TimeTravelState<T> {
   past: T[];
@@ -8,26 +8,33 @@ interface TimeTravelState<T> {
   actions: string[];
 }
 
-interface TimeTravelConfig {
-  maxHistory?: number;
-  enableDevTools?: boolean;
-  recordActions?: boolean;
+interface TimeTravelMethods<T> {
+  undo: () => void;
+  redo: () => void;
+  jumpTo: (index: number) => void;
+  getHistory: () => TimeTravelState<T>;
+  clearHistory: () => void;
 }
 
-interface ReduxDevTools {
-  connect: (options: { name: string; trace?: boolean }) => {
-    init: (state: unknown) => void;
-    send: (action: string, state: unknown) => void;
-  };
-}
+// interface TimeTravelConfig {
+//   maxHistory?: number;
+//   enableDevTools?: boolean;
+//   recordActions?: boolean;
+// }
+
+// interface ReduxDevTools {
+//   connect: (options: { name: string; trace?: boolean }) => {
+//     init: (state: unknown) => void;
+//     send: (action: string, state: unknown) => void;
+//   };
+// }
 
 export const timeTravel = <T extends object>(
   store: StoreApi<T>,
-  config: TimeTravelConfig = {}
+  config: { maxHistory?: number; recordActions?: boolean } = {}
 ) => {
-  const { maxHistory = 50, enableDevTools = true, recordActions = true } = config;
+  const { maxHistory = 50, recordActions = false } = config;
 
-  // Initialize time-travel state
   const timeTravelState: TimeTravelState<T> = {
     past: [],
     present: store.getState(),
@@ -36,157 +43,66 @@ export const timeTravel = <T extends object>(
     actions: [],
   };
 
-  // Initialize Redux DevTools if enabled
-  const devTools = enableDevTools
-    ? ((window as unknown) as { __REDUX_DEVTOOLS_EXTENSION__?: ReduxDevTools }).__REDUX_DEVTOOLS_EXTENSION__?.connect({
-        name: 'Lucent-Flow Time Travel',
-        trace: false
-      })
-    : null;
-
-  if (devTools) {
-    devTools.init(timeTravelState.present);
-  }
-
-  // Time-travel methods
-  const back = () => {
-    if (timeTravelState.past.length === 0) return;
-
-    const previous = timeTravelState.past[timeTravelState.past.length - 1];
-    const newPast = timeTravelState.past.slice(0, -1);
-
-    timeTravelState.past = newPast;
-    timeTravelState.future = [timeTravelState.present, ...timeTravelState.future];
-    timeTravelState.present = previous;
-    timeTravelState.currentIndex--;
-
-    store.setState(previous);
-    if (devTools) {
-      devTools.send('BACK', timeTravelState.present);
-    }
-  };
-
-  const forward = () => {
-    if (timeTravelState.future.length === 0) return;
-
-    const next = timeTravelState.future[0];
-    const newFuture = timeTravelState.future.slice(1);
-
-    timeTravelState.past = [...timeTravelState.past, timeTravelState.present];
-    timeTravelState.future = newFuture;
-    timeTravelState.present = next;
-    timeTravelState.currentIndex++;
-
-    store.setState(next);
-    if (devTools) {
-      devTools.send('FORWARD', timeTravelState.present);
-    }
-  };
-
-  const jumpTo = (index: number) => {
-    if (index < 0 || index >= timeTravelState.past.length + timeTravelState.future.length + 1) {
-      return;
-    }
-
-    const targetIndex = index;
-    const currentIndex = timeTravelState.currentIndex;
-
-    if (targetIndex === currentIndex) return;
-
-    if (targetIndex < currentIndex) {
-      // Move backward
-      const steps = currentIndex - targetIndex;
-      for (let i = 0; i < steps; i++) {
-        back();
+  const timeTravelMethods: TimeTravelMethods<T> = {
+    undo: () => {
+      if (timeTravelState.currentIndex > 0) {
+        timeTravelState.currentIndex--;
+        const previousState = timeTravelState.past[timeTravelState.currentIndex];
+        store.setState(previousState);
+        timeTravelState.present = previousState;
+        timeTravelState.future = [timeTravelState.present, ...timeTravelState.future];
       }
-    } else {
-      // Move forward
-      const steps = targetIndex - currentIndex;
-      for (let i = 0; i < steps; i++) {
-        forward();
+    },
+    redo: () => {
+      if (timeTravelState.future.length > 0) {
+        const nextState = timeTravelState.future[0];
+        timeTravelState.future = timeTravelState.future.slice(1);
+        timeTravelState.currentIndex++;
+        store.setState(nextState);
+        timeTravelState.present = nextState;
       }
-    }
+    },
+    jumpTo: (index: number) => {
+      if (index >= 0 && index < timeTravelState.past.length) {
+        const targetState = timeTravelState.past[index];
+        timeTravelState.currentIndex = index;
+        store.setState(targetState);
+        timeTravelState.present = targetState;
+        timeTravelState.future = timeTravelState.past.slice(index + 1);
+      }
+    },
+    getHistory: () => ({ ...timeTravelState }),
+    clearHistory: () => {
+      timeTravelState.past = [];
+      timeTravelState.future = [];
+      timeTravelState.currentIndex = 0;
+      timeTravelState.actions = [];
+    },
   };
 
-  const replayFrom = (index: number) => {
-    if (index < 0 || index >= timeTravelState.actions.length) return;
-
-    // const currentState = timeTravelState.present;
-    const actionsToReplay = timeTravelState.actions.slice(index);
-
-    // Reset to the state at the given index
-    jumpTo(index);
-
-    // Replay actions
-    actionsToReplay.forEach((action) => {
-      // Execute the action
-      // This would need to be implemented based on your action format
-      console.log('Replaying action:', action);
-    });
-  };
-
-  const clearHistory = () => {
-    timeTravelState.past = [];
-    timeTravelState.future = [];
-    timeTravelState.actions = [];
-    timeTravelState.currentIndex = 0;
-  };
-
-  // Add time-travel methods to store
-  const storeWithTimeTravel = store as StoreApi<T> & {
-    timeTravel: {
-      back: () => void;
-      forward: () => void;
-      jumpTo: (index: number) => void;
-      replayFrom: (index: number) => void;
-      clearHistory: () => void;
-      getCurrentIndex: () => number;
-      getHistory: () => {
-        past: T[];
-        present: T;
-        future: T[];
-        actions: string[];
-      };
-    };
-  };
-
-  storeWithTimeTravel.timeTravel = {
-    back,
-    forward,
-    jumpTo,
-    replayFrom,
-    clearHistory,
-    getCurrentIndex: () => timeTravelState.currentIndex,
-    getHistory: () => ({
-      past: timeTravelState.past,
-      present: timeTravelState.present,
-      future: timeTravelState.future,
-      actions: timeTravelState.actions,
-    }),
-  };
+  // Add time travel methods to store
+  (store as StoreApi<T> & { timeTravel: TimeTravelMethods<T> }).timeTravel = timeTravelMethods;
 
   return (set: StoreApi<T>['setState']) => {
-    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>), action?: string) => {
+    return (partial: T | ((state: T) => T), action?: string) => {
       const nextState = typeof partial === 'function' 
-        ? (partial as (state: T) => T | Partial<T>)(store.getState())
+        ? (partial as (state: T) => T)(store.getState())
         : partial;
 
-      // Update time-travel state
-      timeTravelState.past = [...timeTravelState.past, timeTravelState.present].slice(-maxHistory);
-      timeTravelState.present = nextState as T;
-      timeTravelState.future = [];
-      timeTravelState.currentIndex = timeTravelState.past.length;
+      // Only update history if state actually changed
+      if (JSON.stringify(timeTravelState.present) !== JSON.stringify(nextState)) {
+        // Update time-travel state
+        timeTravelState.past = [...timeTravelState.past, timeTravelState.present].slice(-maxHistory);
+        timeTravelState.present = nextState;
+        timeTravelState.future = [];
+        timeTravelState.currentIndex = timeTravelState.past.length;
 
-      if (recordActions && action) {
-        timeTravelState.actions = [...timeTravelState.actions, action].slice(-maxHistory);
-      }
+        if (recordActions && action) {
+          timeTravelState.actions = [...timeTravelState.actions, action].slice(-maxHistory);
+        }
 
-      // Update store state
-      set(nextState, false);
-
-      // Send to DevTools
-      if (devTools) {
-        devTools.send(action || 'STATE_UPDATE', timeTravelState.present);
+        // Update store state
+        set(nextState);
       }
     };
   };

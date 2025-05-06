@@ -1,9 +1,9 @@
 /** @jsxImportSource react */
-import { StoreApi } from "zustand";
 import { useRef, useEffect, Suspense } from "react";
 import type { ReactNode } from "react";
 import { StoreContext } from "./context";
 import { NextConfig } from "./store";
+import { StoreApi } from "../../core/createStore";
 
 // Create a provider component
 export function StoreProvider<T extends object>({
@@ -34,10 +34,10 @@ export function StoreProvider<T extends object>({
   // Handle persistence
   useEffect(() => {
     if (config.persist) {
-      const unsubscribe = storeRef.current?.subscribe((state) => {
+      const unsubscribe = storeRef.current?.subscribe(() => {
         localStorage.setItem(
           config.storageKey || "store",
-          JSON.stringify(state)
+          JSON.stringify(storeRef.current?.getState())
         );
       });
       return () => unsubscribe?.();

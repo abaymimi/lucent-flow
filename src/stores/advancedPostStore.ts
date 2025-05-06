@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createStore } from '../core/createStore';
 import { lucentQuery } from '../utils/lucentQuery';
 // import { QueryBuilder } from '../utils/queryBuilder';
 import { Post, PostFilters } from '../types/post';
@@ -57,7 +57,7 @@ interface AdvancedPostStore {
   reset: () => void;
 }
 
-export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
+export const useAdvancedPostStore = createStore<AdvancedPostStore>((set, get) => ({
   posts: [],
   pagination: {
     currentPage: 1,
@@ -74,15 +74,16 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
   loading: false,
   error: null,
 
-  setFilters: (newFilters) => {
+  setFilters: (newFilters: Partial<PostFilters>) => {
     set((state) => ({
+      ...state,
       filters: { ...state.filters, ...newFilters },
     }));
   },
 
   fetchPosts: async (filters = get().filters) => {
     try {
-      set({ loading: true, error: null });
+      set((state) => ({ ...state, loading: true, error: null }));
 
       const result = await postQuery({
         url: '/posts',
@@ -106,7 +107,8 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       const totalItems = 100; // This would come from your API
       const totalPages = Math.ceil(totalItems / (filters.limit || 10));
       
-      set({
+      set((state) => ({
+        ...state,
         posts: result.data as Post[],
         pagination: {
           currentPage: filters.page || 1,
@@ -115,21 +117,21 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
           itemsPerPage: filters.limit || 10,
         },
         loading: false,
-      });
+      }));
     } catch (error) {
-      set({
+      set((state) => ({
+        ...state,
         error: error instanceof Error ? error.message : 'Failed to fetch posts',
         loading: false,
-      });
+      }));
     }
   },
 
-  createPost: async (post) => {
+  createPost: async (post: Omit<Post, 'id'>) => {
     const optimisticId = Date.now();
     try {
-      set({ loading: true, error: null });
+      set((state) => ({ ...state, loading: true, error: null }));
 
-      // Optimistic update
       const optimisticPost: Post = {
         ...post,
         id: optimisticId,
@@ -137,6 +139,7 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       };
 
       set((state) => ({
+        ...state,
         posts: [optimisticPost, ...state.posts],
       }));
 
@@ -147,16 +150,16 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
         optimisticUpdateId: optimisticId.toString(),
       });
 
-      // Replace optimistic post with real data
       set((state) => ({
+        ...state,
         posts: state.posts.map((p) =>
           p.id === optimisticId ? result.data as Post : p
         ),
         loading: false,
       }));
     } catch (error) {
-      // Rollback optimistic update
       set((state) => ({
+        ...state,
         posts: state.posts.filter((p) => p.id !== optimisticId),
         error: error instanceof Error ? error.message : 'Failed to create post',
         loading: false,
@@ -164,12 +167,12 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
     }
   },
 
-  updatePost: async (id, post) => {
+  updatePost: async (id: number, post: Partial<Post>) => {
     try {
-      set({ loading: true, error: null });
+      set((state) => ({ ...state, loading: true, error: null }));
 
-      // Optimistic update
       set((state) => ({
+        ...state,
         posts: state.posts.map((p) =>
           p.id === id ? { ...p, ...post } : p
         ),
@@ -182,29 +185,27 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       });
 
       set((state) => ({
+        ...state,
         posts: state.posts.map((p) =>
           p.id === id ? result.data as Post : p
         ),
         loading: false,
       }));
     } catch (error) {
-      // Rollback optimistic update
       set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === id ? { ...p, ...post } : p
-        ),
+        ...state,
         error: error instanceof Error ? error.message : 'Failed to update post',
         loading: false,
       }));
     }
   },
 
-  deletePost: async (id) => {
+  deletePost: async (id: number) => {
     try {
-      set({ loading: true, error: null });
+      set((state) => ({ ...state, loading: true, error: null }));
 
-      // Optimistic update
       set((state) => ({
+        ...state,
         posts: state.posts.filter((p) => p.id !== id),
       }));
 
@@ -213,11 +214,10 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
         method: 'DELETE',
       });
 
-      set({ loading: false });
+      set((state) => ({ ...state, loading: false }));
     } catch (error) {
-      // Rollback optimistic update
       set((state) => ({
-        posts: state.posts,
+        ...state,
         error: error instanceof Error ? error.message : 'Failed to delete post',
         loading: false,
       }));
@@ -225,7 +225,8 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
   },
 
   reset: () => {
-    set({
+    set((state) => ({
+      ...state,
       posts: [],
       pagination: {
         currentPage: 1,
@@ -241,6 +242,6 @@ export const useAdvancedPostStore = create<AdvancedPostStore>((set, get) => ({
       },
       loading: false,
       error: null,
-    });
+    }));
   },
 })); 

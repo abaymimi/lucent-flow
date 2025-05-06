@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 interface HydrationConfig {
   storage?: 'localStorage' | 'indexedDB';
@@ -164,9 +164,9 @@ export const createHydration = <T extends object>(
   };
 
   // Auto-save on state changes
-  const unsubscribe = store.subscribe((state) => {
+  const unsubscribe = store.subscribe(() => {
     if (hydrationState.isHydrated) {
-      saveState(state);
+      saveState(store.getState());
     }
   });
 

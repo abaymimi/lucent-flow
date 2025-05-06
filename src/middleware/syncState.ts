@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 interface SyncStateConfig {
   channel: string;
@@ -11,11 +11,6 @@ interface SyncState {
   isSyncing: boolean;
   lastSync: number;
   paused: boolean;
-}
-
-interface TimestampedState {
-  lastUpdated?: number;
-  [key: string]: unknown;
 }
 
 interface SyncStateMethods<T> {
@@ -47,33 +42,19 @@ export const syncState = <T extends object>(
   let syncTimeout: NodeJS.Timeout;
   let conflictHandler: ((localState: T, remoteState: T) => T) | null = null;
 
-  // Broadcast changes to other tabs
-  const broadcast = (state: T) => {
-    if (syncState.paused) return;
-
-    const storageEvent = new StorageEvent('storage', {
-      key: channel,
-      newValue: JSON.stringify(state),
-      oldValue: null,
-      storageArea: window[storage],
-    });
-
-    // Dispatch the event
-    window.dispatchEvent(storageEvent);
-  };
-
-  // Handle incoming changes from other tabs
-  const handleStorageEvent = (event: StorageEvent) => {
+  // Handle storage events
+  const handleStorageEvent = (e: StorageEvent) => {
     if (
-      event.key !== channel ||
-      event.storageArea !== window[storage] ||
-      !event.newValue
+      e.key !== channel ||
+      e.storageArea !== window[storage] ||
+      !e.newValue ||
+      syncState.paused
     ) {
       return;
     }
 
     try {
-      const remoteState = JSON.parse(event.newValue) as T;
+      const remoteState = JSON.parse(e.newValue) as T;
       const localState = store.getState();
 
       if (conflictHandler) {
@@ -81,12 +62,13 @@ export const syncState = <T extends object>(
         store.setState(resolvedState);
       } else {
         // Default conflict resolution: use the most recent state
-        const localTimestamp = (localState as TimestampedState).lastUpdated || 0;
-        const remoteTimestamp = (remoteState as TimestampedState).lastUpdated || 0;
-
-        if (remoteTimestamp > localTimestamp) {
-          store.setState(remoteState);
-        }
+        const updatedState = { ...localState } as T;
+        Object.keys(remoteState).forEach(key => {
+          if (!blacklist.includes(key)) {
+            updatedState[key as keyof T] = remoteState[key as keyof T];
+          }
+        });
+        store.setState(updatedState);
       }
 
       syncState.lastSync = Date.now();
@@ -95,7 +77,7 @@ export const syncState = <T extends object>(
     }
   };
 
-  // Add event listener for storage events
+  // Subscribe to storage events
   window.addEventListener('storage', handleStorageEvent);
 
   // Sync methods
@@ -104,14 +86,14 @@ export const syncState = <T extends object>(
 
     syncState.isSyncing = true;
     const state = store.getState();
-    const filteredState = { ...state };
+    const filteredState = { ...state } as T;
 
     // Remove blacklisted properties
     blacklist.forEach((key) => {
       delete (filteredState as Record<string, unknown>)[key];
     });
 
-    broadcast(filteredState);
+    window[storage].setItem(channel, JSON.stringify(filteredState));
     syncState.isSyncing = false;
     syncState.lastSync = Date.now();
   };
@@ -139,12 +121,12 @@ export const syncState = <T extends object>(
   };
 
   return (set: StoreApi<T>['setState']) => {
-    return (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
+    return (partial: T | ((state: T) => T)) => {
       const nextState = typeof partial === 'function' 
-        ? (partial as (state: T) => T | Partial<T>)(store.getState())
+        ? (partial as (state: T) => T)(store.getState())
         : partial;
 
-      set(nextState, false);
+      set(nextState);
 
       // Debounce sync
       clearTimeout(syncTimeout);

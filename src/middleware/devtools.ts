@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 interface ReduxDevTools {
   connect: (options: { name: string; trace: boolean }) => {
@@ -43,10 +43,10 @@ export const devtools = <T extends object>(
   return (set: StoreApi<T>['setState']) => {
     return (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
       const nextState = typeof partial === 'function' 
-        ? (partial as (state: T) => T | Partial<T>)(store.getState())
-        : partial;
+        ? (partial as (state: T) => T)(store.getState())
+        : { ...store.getState(), ...partial };
 
-      set(nextState, false);
+      set(nextState);
 
       // Send state update to DevTools
       devTools.send(

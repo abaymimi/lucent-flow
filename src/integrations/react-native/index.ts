@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createStore as create } from '../../core/createStore';
 import NetInfo from '@react-native-community/netinfo';
 import { AppState, AppStateStatus } from 'react-native';
 

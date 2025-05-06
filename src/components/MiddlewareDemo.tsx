@@ -3,7 +3,7 @@ import { useExampleStore } from "../stores/exampleStore";
 
 export const MiddlewareDemo: React.FC = () => {
   const { count, text, increment, decrement, setText, undo, redo } =
-    useExampleStore();
+    useExampleStore.getState();
 
   return (
     <div className="middleware-demo">

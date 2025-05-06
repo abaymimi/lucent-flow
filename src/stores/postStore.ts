@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createStore as create} from '../core/createStore';
 
 interface Post {
   id: number;
@@ -29,10 +29,10 @@ const usePostStore = create<PostStore>((set, get) => ({
   isLoading: false,
   error: null,
   
-  setFilters: (filters: Filters) => set({ filters }),
+  setFilters: (filters: Filters) => set((state) => ({ ...state, filters })),
   
   fetchPosts: async () => {
-    set({ isLoading: true, error: null });
+    set((state) => ({ ...state, isLoading: true, error: null }));
     try {
       const { userId, searchTerm } = get().filters;
       let url = 'https://jsonplaceholder.typicode.com/posts';
@@ -50,14 +50,14 @@ const usePostStore = create<PostStore>((set, get) => ({
           post.body.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      set({ posts, isLoading: false });
+      set((state) => ({ ...state, posts, isLoading: false }));
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'An error occurred', isLoading: false });
+      set((state) => ({ ...state, error: error instanceof Error ? error.message : 'An error occurred', isLoading: false }));
     }
   },
   
   createPost: async (post: Omit<Post, 'id'>) => {
-    set({ isLoading: true, error: null });
+    set((state) => ({ ...state, isLoading: true, error: null }));
     try {
       const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
         method: 'POST',
@@ -71,16 +71,17 @@ const usePostStore = create<PostStore>((set, get) => ({
       }
       const newPost = await response.json();
       set((state) => ({ 
+        ...state,
         posts: [...state.posts, newPost],
         isLoading: false 
       }));
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'An error occurred', isLoading: false });
+      set((state) => ({ ...state, error: error instanceof Error ? error.message : 'An error occurred', isLoading: false }));
     }
   },
   
   deletePost: async (id: number) => {
-    set({ isLoading: true, error: null });
+    set((state) => ({ ...state, isLoading: true, error: null }));
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
         method: 'DELETE',
@@ -89,11 +90,12 @@ const usePostStore = create<PostStore>((set, get) => ({
         throw new Error('Failed to delete post');
       }
       set((state) => ({ 
+        ...state,
         posts: state.posts.filter((post) => post.id !== id),
         isLoading: false 
       }));
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'An error occurred', isLoading: false });
+      set((state) => ({ ...state, error: error instanceof Error ? error.message : 'An error occurred', isLoading: false }));
     }
   },
 }));

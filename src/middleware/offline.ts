@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 interface OfflineAction {
   type: string;
@@ -222,7 +222,7 @@ export const offline = <T extends object>(
         ? (partial as (state: T) => T | Partial<T>)(store.getState())
         : partial;
 
-      set(nextState, false);
+      set(nextState as T);
 
       if (!offlineState.isOnline) {
         queueAction({

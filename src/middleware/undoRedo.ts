@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi} from '../core/createStore';
 
 interface HistoryState<T> {
   past: T[];
@@ -74,7 +74,7 @@ export const undoRedo = <T extends object>(
       history.present = nextState as T;
       history.future = [];
 
-      set(nextState, false);
+      set(nextState as T);
     };
   };
 }; 

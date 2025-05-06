@@ -1,4 +1,4 @@
-import { create, StateCreator, StoreApi } from "zustand";
+import { StoreApi, createStore } from "../../core/createStore";
 
 export interface HydrationState {
   _hasHydrated: boolean;
@@ -12,21 +12,24 @@ export interface NextConfig {
 }
 
 export function createNextStore<T extends object>(
-  createState: StateCreator<T, [], []>,
+  createState: (set: StoreApi<T>['setState'], get: StoreApi<T>['getState']) => T,
   config: NextConfig = {}
-): StoreApi<T> {
+): StoreApi<T & HydrationState> {
   const { ssr = true, persist = false } = config;
 
   // Create the store
-  const useStore = create<T & HydrationState>((set, get, store) => ({
-    ...createState(set, get, store),
-    _hasHydrated: false,
-  }));
+  const store = createStore<T & HydrationState>((set, get) => {
+    const baseState = createState(
+      (partial) => set((state) => ({ ...state, ...(typeof partial === 'function' ? partial(state) : partial) })),
+      get
+    );
+    return { ...baseState, _hasHydrated: false };
+  });
 
   // Add SSR support
   if (ssr) {
-    const originalGetState = useStore.getState;
-    useStore.getState = () => {
+    const originalGetState = store.getState;
+    store.getState = () => {
       const state = originalGetState();
       if (typeof window === "undefined") {
         return state;
@@ -46,12 +49,12 @@ export function createNextStore<T extends object>(
         : null;
 
     if (storedState) {
-      useStore.setState({
+      store.setState({
         ...JSON.parse(storedState),
         _hasHydrated: true,
       });
     }
   }
 
-  return useStore;
+  return store;
 } 

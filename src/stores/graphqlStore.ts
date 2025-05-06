@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createStore as create } from '../core/createStore';
 import { GraphQLClient } from '../utils/graphqlClient';
 import { GraphQLStoreConfig, GraphQLResponse } from '../types/graphql';
 
@@ -25,28 +25,30 @@ export const createGraphQLStore = <T>(config: GraphQLStoreConfig<T>) => {
 
     fetchData: async () => {
       try {
-        set({ loading: true, error: null });
+        set((state) => ({ ...state, loading: true, error: null }));
         const response = await client.query<T>(config.query.query, config.query.variables) as GraphQLResponse<T>;
         
         if (response.errors) {
           throw new Error(response.errors[0].message);
         }
 
-        set({
-          data: response.data,
+        set((state) => ({
+          ...state,
+          data: response.data ?? null,
           loading: false,
-        });
+        }));
       } catch (error) {
-        set({
+        set((state) => ({
+          ...state,
           error: error instanceof Error ? error : new Error('Unknown error occurred'),
           loading: false,
-        });
+        }));
       }
     },
 
     mutate: async (mutation, variables) => {
       try {
-        set({ loading: true, error: null });
+        set((state) => ({ ...state, loading: true, error: null }));
         const response = await client.mutate<T>(mutation, variables) as GraphQLResponse<T>;
         
         if (response.errors) {
@@ -56,22 +58,25 @@ export const createGraphQLStore = <T>(config: GraphQLStoreConfig<T>) => {
         if (config.updateQuery && response.data) {
           const currentData = get().data;
           if (currentData) {
-            set({
-              data: config.updateQuery(currentData, response.data),
+            set((state) => ({
+              ...state,
+              data: config.updateQuery!(currentData, response.data!),
               loading: false,
-            });
+            }));
           }
         } else {
-          set({
-            data: response.data,
+          set((state) => ({
+            ...state,
+            data: response.data ?? null,
             loading: false,
-          });
+          }));
         }
       } catch (error) {
-        set({
+        set((state) => ({
+          ...state,
           error: error instanceof Error ? error : new Error('Unknown error occurred'),
           loading: false,
-        });
+        }));
       }
     },
 

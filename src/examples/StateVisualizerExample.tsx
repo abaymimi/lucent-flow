@@ -1,5 +1,5 @@
 import React from "react";
-import { create } from "zustand";
+import { createStore as create } from "../core/createStore";
 import { StateVisualizerComponent } from "../components/StateVisualizer";
 import "./StateVisualizerExample.css";
 
@@ -12,12 +12,12 @@ interface CounterState {
 
 const useCounterStore = create<CounterState>((set) => ({
   count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 })),
+  increment: () => set((state) => ({ ...state, count: state.count + 1 })),
+  decrement: () => set((state) => ({ ...state, count: state.count - 1 })),
 }));
 
 export const StateVisualizerExample: React.FC = () => {
-  const { count, increment, decrement } = useCounterStore();
+  const { count, increment, decrement } = useCounterStore.getState();
 
   return (
     <div className="visualizer-example">
@@ -30,7 +30,7 @@ export const StateVisualizerExample: React.FC = () => {
       </div>
 
       <div className="visualizer-container">
-        <StateVisualizerComponent
+        <StateVisualizerComponent<CounterState>
           store={useCounterStore}
           config={{
             maxHistory: 50,

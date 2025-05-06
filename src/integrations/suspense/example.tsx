@@ -15,13 +15,13 @@ const { useStore, withSuspense } = createSuspenseStore<DataState>(
     loading: false,
     error: null,
     fetchData: async () => {
-      set({ loading: true });
+      set((state) => ({ ...state, loading: true }));
       try {
         const response = await fetch("/api/data");
         const data = await response.json();
-        set({ data, loading: false });
+        set((state) => ({ ...state, data, loading: false }));
       } catch (error) {
-        set({ error: error as Error, loading: false });
+        set((state) => ({ ...state, error: error as Error, loading: false }));
       }
     },
   }),

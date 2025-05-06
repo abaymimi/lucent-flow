@@ -1,11 +1,22 @@
-import { createStore } from '../core/createStore';
-import { createPersistMiddleware } from '../middleware/persist';
+import { createContextStore } from '../core/createStore';
+// import { createPersistMiddleware } from '../middleware/persist';
 import { nativeStorage } from '../utils/nativeStorage';
 import { hydrate } from '../utils/hydrate';
 
-const persist = createPersistMiddleware('lucent_counter', nativeStorage);
+interface CounterState {
+  count: number;
+}
 
-export const counterStore = createStore({ count: 0 }, [persist]);
+// const persist = createPersistMiddleware('lucent_counter', nativeStorage);
+
+const { StoreProvider, useStore, StoreContext } = createContextStore<CounterState>(() => ({
+  count: 0,
+}));
 
 // Auto-hydrate state
-hydrate('lucent_counter', nativeStorage, counterStore.setState);
+hydrate('lucent_counter', nativeStorage, (state) => {
+  const store = useStore((s) => s);
+  store.count = (state as CounterState).count;
+});
+
+export { StoreProvider, useStore, StoreContext };

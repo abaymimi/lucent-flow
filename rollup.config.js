@@ -15,7 +15,7 @@ export default [
       },
     ],
     plugins: [nodeResolve(), commonjs(), typescript()],
-    external: [], // mark React, etc. as external if needed
+    external: ["react", "react-dom", "react-native"], // Mark React as an external dependency
   },
   {
     input: "src/index.ts",

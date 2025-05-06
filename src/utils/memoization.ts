@@ -1,4 +1,4 @@
-import { create, StoreApi } from 'zustand';
+import { StoreApi, createStore } from '../core/createStore';
 
 // Example state interface
 interface State {
@@ -185,12 +185,15 @@ const updateItem = createMemoizedAction(
 );
 
 // 3. Using in a store
-const useStore = create<State>()((set: (fn: (state: State) => Partial<State>) => void) => ({
+const useStore = createStore<State>((set) => ({
   items: [],
   // Memoized selector
   getExpensiveItems: () => expensiveSelector(useStore.getState()),
   // Memoized action
-  updateItem: (id: string) => set(updateItem(id)),
+  updateItem: (id: string) => set((state) => {
+    const update = updateItem(id)(state);
+    return { ...state, items: update.items || state.items };
+  }),
 }));
 
 // interface Product {

@@ -1,11 +1,14 @@
-import { StoreApi } from 'zustand';
-import { create } from 'zustand';
+import { StoreApi, createStore } from '../core/createStore';
+
+type TestStoreApi<T> = StoreApi<T> & {
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), action?: string | boolean) => void;
+};
 
 /**
  * Testing middleware that records all state changes
  */
 export const testMiddleware = <T extends object>(
-  store: StoreApi<T>,
+  store: TestStoreApi<T>,
   options?: {
     onStateChange?: (state: T, action: string) => void;
     recordHistory?: boolean;
@@ -14,7 +17,7 @@ export const testMiddleware = <T extends object>(
   const { onStateChange, recordHistory = true } = options || {};
   const history: { state: T; action: string; timestamp: number }[] = [];
 
-  return (set: StoreApi<T>['setState']) => {
+  return (set: TestStoreApi<T>['setState']) => {
     return (partial: T | Partial<T> | ((state: T) => T | Partial<T>), action?: string | boolean) => {
       const nextState = typeof partial === 'function' 
         ? (partial as (state: T) => T | Partial<T>)(store.getState())
@@ -32,7 +35,7 @@ export const testMiddleware = <T extends object>(
         onStateChange(nextState as T, typeof action === 'string' ? action : 'unknown');
       }
 
-      set(nextState, false);
+      set(nextState as T);
     };
   };
 };
@@ -43,12 +46,12 @@ export const testMiddleware = <T extends object>(
 export const createMockStore = <T extends object>(
   initialState: T,
   options?: {
-    middleware?: (store: StoreApi<T>) => (set: StoreApi<T>['setState']) => StoreApi<T>['setState'];
+    middleware?: (store: TestStoreApi<T>) => (set: TestStoreApi<T>['setState']) => TestStoreApi<T>['setState'];
   }
 ) => {
-  const store = create<T>()(() => ({
+  const store = createStore<T>(() => ({
     ...initialState,
-  }));
+  })) as TestStoreApi<T>;
 
   if (options?.middleware) {
     const middleware = options.middleware(store);
@@ -117,12 +120,12 @@ export class StoreSnapshot<T extends object> {
  * Integration testing helpers
  */
 export class TestHelper<T extends object> {
-  private store: StoreApi<T>;
+  private store: TestStoreApi<T>;
   private snapshot: StoreSnapshot<T>;
   private stateChanges: { state: T; action: string }[] = [];
-  private originalSet: StoreApi<T>['setState'];
+  private originalSet: TestStoreApi<T>['setState'];
 
-  constructor(store: StoreApi<T>) {
+  constructor(store: TestStoreApi<T>) {
     this.store = store;
     this.snapshot = new StoreSnapshot(store);
     this.originalSet = store.setState;
@@ -132,7 +135,7 @@ export class TestHelper<T extends object> {
    * Records state changes during a test
    */
   recordStateChanges() {
-    this.store.setState = (partial, action) => {
+    this.store.setState = (partial: T | Partial<T> | ((state: T) => T | Partial<T>), action?: string | boolean) => {
       const nextState = typeof partial === 'function'
         ? (partial as (state: T) => T | Partial<T>)(this.store.getState())
         : partial;
@@ -142,7 +145,7 @@ export class TestHelper<T extends object> {
         action: typeof action === 'string' ? action : 'unknown',
       });
 
-      this.originalSet(partial, false);
+      this.originalSet(nextState as T);
     };
   }
 

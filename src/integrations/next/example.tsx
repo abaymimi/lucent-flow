@@ -10,9 +10,9 @@ interface CounterState {
 
 // 1. Create a store
 const useCounterStore = createNextStore<CounterState>(
-  (set: (fn: (state: CounterState) => Partial<CounterState>) => void) => ({
+  (set) => ({
     count: 0,
-    increment: () => set((state: CounterState) => ({ count: state.count + 1 })),
+    increment: () => set((state) => ({ ...state, count: state.count + 1 })),
   }),
   {
     persist: true,

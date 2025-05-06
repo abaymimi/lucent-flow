@@ -57,7 +57,7 @@ describe('FeatureDemoStore Tests', () => {
 
       const testDate = new Date();
       // Add an item
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
         items: [
           ...state.items,
@@ -92,7 +92,7 @@ describe('FeatureDemoStore Tests', () => {
       // Get and analyze snapshots
       const snapshots = helper.getSnapshots();
       expect(snapshots).toHaveLength(2);
-      expect(snapshots[1].state.items).toHaveLength(1);
+      expect((snapshots[1].state as StoreState).items).toHaveLength(1);
     });
 
     it('should update an item correctly', () => {
@@ -115,9 +115,9 @@ describe('FeatureDemoStore Tests', () => {
       helper.takeSnapshot();
 
       // Update the item
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
-        items: state.items.map((item) =>
+        items: state.items.map((item: Item) =>
           item.id === 1 ? { ...item, price: 150 } : item
         ),
       }));
@@ -161,9 +161,9 @@ describe('FeatureDemoStore Tests', () => {
       helper.takeSnapshot();
 
       // Delete the item
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
-        items: state.items.filter((item) => item.id !== 1),
+        items: state.items.filter((item: Item) => item.id !== 1),
       }));
 
       // Take final snapshot
@@ -182,7 +182,7 @@ describe('FeatureDemoStore Tests', () => {
       helper.takeSnapshot();
 
       // Update filters
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
         filters: {
           ...state.filters,
@@ -211,7 +211,7 @@ describe('FeatureDemoStore Tests', () => {
 
       const testDate = new Date();
       // Add multiple items
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
         items: [
           ...state.items,
@@ -265,7 +265,7 @@ describe('FeatureDemoStore Tests', () => {
 
       const testDate = new Date();
       // Make a state change
-      mockStore.setState((state) => ({
+      mockStore.setState((state: StoreState) => ({
         ...state,
         items: [
           ...state.items,
@@ -285,7 +285,7 @@ describe('FeatureDemoStore Tests', () => {
       // Get state changes
       const changes = helper.getStateChanges();
       expect(changes).toHaveLength(1);
-      expect(changes[0].state.items).toHaveLength(1);
+      expect((changes[0].state as StoreState).items).toHaveLength(1);
     });
   });
 }); 

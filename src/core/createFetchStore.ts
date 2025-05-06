@@ -21,7 +21,7 @@ export const createFetchStore = <T>(
     lastUpdated: null,
   };
 
-  const store = createStore(initialState);
+  const store = createStore<FetchState<T>>(() => initialState);
 
   const fetchData = async (force = false) => {
     const currentState = store.getState();
@@ -69,7 +69,7 @@ export const createFetchStore = <T>(
   };
 
   const useFetch = (): FetchResult<T> => {
-    const { state } = store.useStore();
+    const state = store.getState();
 
     const refetch = async () => {
       await fetchData(true);

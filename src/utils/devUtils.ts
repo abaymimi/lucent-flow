@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 /**
  * Type validation utilities for development mode
@@ -217,9 +217,9 @@ export const createDevMiddleware = <T extends object>(
 
         // Apply update
         if (replace) {
-          setState(partial as T, true);
+          setState(partial as T);
         } else {
-          setState(partial);
+          setState((state) => ({ ...state, ...partial }));
         }
 
         // Validate state after update

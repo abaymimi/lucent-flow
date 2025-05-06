@@ -1,5 +1,13 @@
 // Core
 export { createStore } from './core/createStore';
+export { configureStore } from './core/configureStore';
+export { LucentProvider } from './core/storeContext';
+export {
+  useLucentStore,
+  useLucentSelector,
+  useLucentDispatch,
+  useLucentState,
+} from './core/hooks';
 
 // Middleware
 export { logger } from './middleware/logger';
@@ -10,8 +18,8 @@ export { createPersistMiddleware } from './middleware/persist';
 export { hydrate } from './utils/hydrate';
 export { nativeStorage } from './utils/nativeStorage';
 export { webStorage } from './utils/webStorage';
-
+export { lucentQuery } from './utils/lucentQuery';
 
 // Types
-export type { Store } from './core/createStore';
+export type { StoreApi as Store } from './core/createStore';
 export type { Middleware } from './types/middleware';

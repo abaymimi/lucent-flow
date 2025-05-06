@@ -1,10 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { StoreApi } from "zustand";
+import { StoreApi } from "../core/createStore";
 import { StateVisualizer as StateVisualizerUtil } from "../utils/stateVisualizer";
 
-interface Props {
-  // Generic type parameter for store state
-  store: StoreApi<unknown>;
+interface Props<T extends object> {
+  store: StoreApi<T>;
   config?: {
     maxHistory?: number;
     trackMemory?: boolean;
@@ -12,19 +11,16 @@ interface Props {
   };
 }
 
-export const StateVisualizerComponent: React.FC<Props> = ({
+export const StateVisualizerComponent = <T extends object>({
   store,
   config,
-}) => {
+}: Props<T>) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const visualizerRef = useRef<StateVisualizerUtil<object> | null>(null);
+  const visualizerRef = useRef<StateVisualizerUtil<T> | null>(null);
 
   useEffect(() => {
     if (!visualizerRef.current) {
-      visualizerRef.current = new StateVisualizerUtil<object>(
-        store as StoreApi<object>,
-        config
-      );
+      visualizerRef.current = new StateVisualizerUtil<T>(store, config);
     }
 
     const visualizer = visualizerRef.current;

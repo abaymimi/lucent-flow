@@ -1,5 +1,6 @@
-import { StoreApi } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
+import { StoreApi } from "../core/createStore";
+import { produce } from "immer";
+
 
 // Type for selector function
 export type Selector<T, R> = (state: T) => R;
@@ -37,7 +38,9 @@ export const withActions = <T extends object, A extends Record<string, ActionCre
     (typedStore as unknown as Record<string, (payload: Parameters<A[keyof A]>[0]) => void>)[key] = (payload: Parameters<A[keyof A]>[0]) => {
       const state = useStore.getState();
       const update = action(payload)(state);
-      useStore.setState(update);
+      useStore.setState(produce(state, (draft) => {
+        Object.assign(draft, update);
+      }));
     };
   });
 
@@ -57,15 +60,19 @@ export const combineStores = <T extends object, U extends object>(
     setState: (partial: Partial<T & U>) => {
       const state1 = store1.getState();
       const state2 = store2.getState();
-      store1.setState({ ...state1, ...partial });
-      store2.setState({ ...state2, ...partial });
+      store1.setState(produce(state1, (draft) => {
+        Object.assign(draft, partial);
+      }));
+      store2.setState(produce(state2, (draft) => {
+        Object.assign(draft, partial);
+      }));
     },
     subscribe: (listener: (state: T & U, prevState: T & U) => void) => {
-      const unsub1 = store1.subscribe((state) => {
-        listener({ ...state, ...store2.getState() } as T & U, combinedStore.getState());
+      const unsub1 = store1.subscribe(() => {
+        listener({ ...store1.getState(), ...store2.getState() } as T & U, combinedStore.getState());
       });
-      const unsub2 = store2.subscribe((state) => {
-        listener({ ...store1.getState(), ...state } as T & U, combinedStore.getState());
+      const unsub2 = store2.subscribe(() => {
+        listener({ ...store1.getState(), ...store2.getState() } as T & U, combinedStore.getState());
       });
       return () => {
         unsub1();
@@ -87,13 +94,12 @@ export const splitStore = <T extends object, K extends keyof T>(
       getState: () => ({ [key]: store.getState()[key] } as Pick<T, K>),
       setState: (partial: Partial<Pick<T, K>>) => {
         const currentState = store.getState();
-        store.setState({ ...currentState, [key]: partial[key] });
+        store.setState(produce(currentState, (draft) => {
+          Object.assign(draft, { [key]: partial[key] });
+        }));
       },
       subscribe: (listener) => store.subscribe(listener),
     } as StoreApi<Pick<T, K>>;
     return acc;
   }, {} as Record<K, StoreApi<Pick<T, K>>>);
 };
-
-// Remove the custom immer implementation and export Zustand's immer
-export { immer }; 

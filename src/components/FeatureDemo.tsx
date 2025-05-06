@@ -13,7 +13,7 @@ export const FeatureDemo: React.FC = () => {
     batchAddItems,
     getFilteredItems,
     getTotalValue,
-  } = useFeatureDemoStore();
+  } = useFeatureDemoStore.getState();
 
   const [newItem, setNewItem] = useState({
     name: "",

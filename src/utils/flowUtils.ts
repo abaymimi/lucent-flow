@@ -1,4 +1,4 @@
-import {  StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 // Type definitions
 type EqualityFn<T> = (a: T, b: T) => boolean;
@@ -188,7 +188,7 @@ export const lucentDevTools = <T extends object>(
         ? (partial as (state: T) => T | Partial<T>)(get())
         : partial;
 
-      set(nextState);
+      set((state) => ({ ...state, ...nextState }));
       devTools.send(
         typeof partial === 'function' ? 'function' : 'action',
         get()

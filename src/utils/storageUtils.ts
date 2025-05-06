@@ -1,4 +1,4 @@
-import { StoreApi } from 'zustand';
+import { StoreApi } from "../core/createStore";
 
 // Storage backend types
 export type StorageBackend = 'localStorage' | 'indexedDB';
@@ -371,7 +371,9 @@ export const withStorage = <T extends object>(
   loadState();
 
   // Subscribe to state changes
-  const unsubscribe = store.subscribe(saveState);
+  const unsubscribe = store.subscribe(() => {
+    saveState(store.getState());
+  });
 
   return {
     ...store,

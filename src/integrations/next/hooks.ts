@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { StoreApi } from "zustand";
 import { StoreContext } from "./context";
+import { StoreApi } from "../../core/createStore";
 
 export function useStore<T, U>(selector: (state: T) => U): U {
   const store = useContext(StoreContext) as StoreApi<T> | null;

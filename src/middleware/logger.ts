@@ -1,16 +1,16 @@
-import { StateCreator, StoreApi } from 'zustand';
+import { StoreApi } from '../core/createStore';
 
 export const logger = <T extends object>(
   config?: { enabled?: boolean; logState?: boolean; logActions?: boolean }
 ) => {
   const { enabled = true, logState = true, logActions = true } = config || {};
   
-  return (fn: StateCreator<T, [], []>) => (
+  return (fn: (set: StoreApi<T>['setState'], get: StoreApi<T>['getState']) => T) => (
     set: StoreApi<T>['setState'],
     get: StoreApi<T>['getState'],
-    store: StoreApi<T>
+    // store: StoreApi<T>
   ) => {
-    if (!enabled) return fn(set, get, store);
+    if (!enabled) return fn(set, get);
 
     const newSet = (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => {
       if (logActions) {
@@ -22,9 +22,12 @@ export const logger = <T extends object>(
         }
         console.groupEnd();
       }
-      return set(partial, false);
+      const nextState = typeof partial === 'function' 
+        ? (partial as (state: T) => T)(get())
+        : { ...get(), ...partial };
+      return set(nextState);
     };
 
-    return fn(newSet, get, store);
+    return fn(newSet, get);
   };
 };

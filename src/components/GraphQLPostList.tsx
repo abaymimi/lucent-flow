@@ -57,7 +57,7 @@ const postStore = createGraphQLStore<{ posts: { data: Post[] } }>({
 });
 
 export const GraphQLPostList: React.FC = () => {
-  const { data, loading, error, fetchData, mutate } = postStore();
+  const { data, loading, error, fetchData, mutate } = postStore.getState();
 
   useEffect(() => {
     fetchData();

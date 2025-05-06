@@ -1,10 +1,9 @@
-import { StateCreator } from 'zustand';
-import { devtools } from './devtools';
-import { logger } from './logger';
-import { undoRedo } from './undoRedo';
+import { StoreApi } from '../core/createStore';
 
 export type Middleware = <T extends object>(
-  fn: StateCreator<T, [], []>
-) => StateCreator<T, [], []>;
+  fn: (set: StoreApi<T>['setState'], get: StoreApi<T>['getState']) => T
+) => (set: StoreApi<T>['setState'], get: StoreApi<T>['getState']) => T;
 
-export { devtools, logger, undoRedo }; 
+export { devtools } from './devtools';
+export { logger } from './logger';
+export { undoRedo } from './undoRedo'; 
