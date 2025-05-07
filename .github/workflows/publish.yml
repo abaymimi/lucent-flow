@@ -19,7 +19,7 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org/"
 
-      - name: Install dependencies
+      - name: Install dependencies(Make sure to use --legacy-peer-deps)
         run: npm install --legacy-peer-deps
 
       - name: Run lint
