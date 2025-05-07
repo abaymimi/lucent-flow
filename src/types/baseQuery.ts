@@ -34,4 +34,5 @@ export interface LucentQueryConfig {
   errorInterceptors?: Array<(error: Error) => Error | Promise<Error>>;
   enableDeduplication?: boolean;
   enableOptimisticUpdates?: boolean;
+  
 }
