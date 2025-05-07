@@ -2,7 +2,6 @@ import { LucentQueryArgs } from '../types/baseQuery';
 
 export class QueryBuilder {
   private query: Partial<LucentQueryArgs> = {};
-
   constructor(private baseUrl: string) {}
 
   select(fields: string[]): this {
