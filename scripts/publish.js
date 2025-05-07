@@ -13,8 +13,9 @@ try {
     console.log("Successfully published to npm!");
   } else {
     console.log(
-      "Commit message does not match the pattern. Skipping npm publish."
+      "Commit message does not match the pattern."
     );
+    console.log("Skipping npm publish.");
   }
 } catch (error) {
   console.error("Error while processing:", error.message);
