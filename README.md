@@ -1,14 +1,14 @@
-![npm](https://img.shields.io/npm/v/lucent-flow)
-![npm downloads](https://img.shields.io/npm/dm/lucent-flow)
-![license](https://img.shields.io/github/license/abaymimi/lucent-flow)
-![GitHub stars](https://img.shields.io/github/stars/abaymimi/lucent-flow?style=social)
-
-
 # 🔮 Lucent-Flow
 
 **Lucent-Flow** is a lightweight, blazing-fast state management and data-fetching library for React and TypeScript. Designed to be tiny, reactive, and composable — with middleware support like logging and persistence baked in.
 
 ---
+
+![npm](https://img.shields.io/npm/v/lucent-flow)
+![npm downloads](https://img.shields.io/npm/dm/lucent-flow)
+![license](https://img.shields.io/github/license/abaymimi/lucent-flow)
+![GitHub stars](https://img.shields.io/github/stars/abaymimi/lucent-flow?style=social)
+
 
 ## ✨ Features
 
