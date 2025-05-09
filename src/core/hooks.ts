@@ -1,7 +1,6 @@
 import { useContext, useState, useEffect, useSyncExternalStore } from 'react';
 import { StoreContext } from './context';
 import { StoreApi } from './createStore';
-
 type Listener = () => void;
 
 export function useLucentStore<T extends object>(): StoreApi<T> {
