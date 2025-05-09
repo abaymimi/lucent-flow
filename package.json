@@ -121,6 +121,6 @@
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.2",
     "typescript-eslint": "^7.0.1",
-    "vite": "^5.1.4"
+    "vite": "^6.3.5"
   }
 }
