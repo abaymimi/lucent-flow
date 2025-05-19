@@ -1,0 +1,46 @@
+name: Welcome new contributor
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  newContributorWelcome:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'imgbot[bot]' && github.actor != 'dependabot[bot]' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get merged pull request info
+        id: getMergedPR
+        run: |
+          PR_INFO=$(gh pr list --search ${{ github.sha }} --state merged --json number,author | jq -r '.[0] | [.number, .author.login] | @tsv')
+          echo "number=$(echo $PR_INFO | cut -f1)" >> "$GITHUB_OUTPUT"
+          echo "author=$(echo $PR_INFO | cut -f2)" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Count total PRs by contributor
+        id: prCount
+        run: |
+          PR_COUNT=$(gh pr list --author ${{ steps.getMergedPR.outputs.author }} --state all | wc -l)
+          echo "count=$PR_COUNT" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Post welcome comment if first PR
+        if: ${{ steps.prCount.outputs.count == '1' }}
+        run: |
+          gh pr comment ${{ steps.getMergedPR.outputs.number }} --body \
+          "@${{ steps.getMergedPR.outputs.author }} 🎉 Congratulations on your **first contribution** to `lucent-flow`! We're excited to have you onboard. 🚀
+
+          Here are a few things to keep in mind:
+          1. Please check out our [contribution guide](https://github.com/abaymimi/lucent-flow/blob/main/CONTRIBUTING.md) if you haven't already.
+          2. We review PRs carefully, and you're always welcome to tackle more issues!
+          3. Don't hesitate to start a discussion or suggest new features or improvements.
+
+          Thanks again for contributing—you're awesome! 💙"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
