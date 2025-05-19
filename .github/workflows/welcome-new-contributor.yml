@@ -6,7 +6,7 @@ on:
 
 jobs:
   newContributorWelcome:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted # Use the self-hosted runner
     if: ${{ github.actor != 'imgbot[bot]' && github.actor != 'dependabot[bot]' }}
 
     steps:
